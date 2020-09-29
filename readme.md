@@ -1,6 +1,6 @@
 # deepnet.js
 
-![GitHub Logo](/logo.png)
+<img src="logo.png" width="200" height="200" />
 
 ## What is this ?
 this is a neural network pakage implemented using javascript.
@@ -23,9 +23,9 @@ const construct = deepjs.constructor;
 * create the modal
 
 ```javascript
-const model = new deepjs.StandardNet() 
+const model = new deepjs.StandardNet();
 // or else
-const model = new deepjs.VanillaNet() 
+const model = new deepjs.VanillaNet();
 ```
 
 * build layers
@@ -67,7 +67,7 @@ model.train(
         learningRate: 0.04,
         iterations: 100, 
         costfunction: construct.costfn.CrossEntropy, // specify loss function
-        log: (iteration, err)=>{ console.log(iteration, err) } // custom log method
+        log: (iteration, err)=>{ console.log(iteration, err) }, // custom log method
         logAt: 50 || false, // it will log after every 50 iteration
         dropoutAll: true || false, // false        
     }
@@ -77,5 +77,6 @@ model.train(
 * Test the model
 
 ```javascript
-model.predict([1, 0, 0, 0, 0, 0, 0, 0, 0, 0]).map(v => Math.round(v)),
+model.predict([1, 1]);
+model.predict([0, 0]);
 ```
