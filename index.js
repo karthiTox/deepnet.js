@@ -1,8 +1,11 @@
 const standardnet = require("./src/nn");
+const rnn = require("./src/rnn");
 const constructor = require("./src/constructor");
 
 module.exports = {
-    VanillaNet: standardnet,
-    StandardNet: standardnet,
     constructor: constructor,
+    StandardNet: standardnet,
+    recurrent:{
+        rnn: rnn
+    },
 }

@@ -2,8 +2,8 @@ const fs = require("fs")
 const path = require("path")
 const util = require("./utilities/util")
 const constuct = require("./constructor")
+
 const math = require("./math/entry")
-const { error } = require("console")
 const Matrix = math.Matrix
 
 class nn{

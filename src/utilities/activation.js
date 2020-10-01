@@ -79,17 +79,24 @@ module.exports = class activation extends act{
 
     softmax(zArr = []){
         let re = 0; 
+        let m = Math.max(...zArr);
         zArr.forEach(r => {
-            re += Math.exp(r);
+            re += Math.exp(r - m);
         });
-        return zArr.map(z => Math.exp(z)/re);
+        return zArr.map(z => Math.exp(z - m)/re);
     }
 
+    // this derivative is wrong....
     softmaxPrime(zArr = []){
         let re = 0; 
+        let m = Math.max(...zArr);
+
         zArr.forEach(r => {
-            re += Math.exp(r);
+            re += Math.exp(r - m);
         });
-        return zArr.map(z => (Math.exp(z)/re)*(1 - Math.exp(z)/re));      
+        return zArr.map(z => {
+            let a = Math.exp(z - m)/re
+            return a * ( 1 - a )
+        });              
     }
 }

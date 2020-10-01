@@ -3,12 +3,12 @@
 <img src="logo.png" width="200" height="200" />
 
 ## What is this ?
-this is a neural network pakage implemented using javascript.
+this is a neural network pakage implemented for javascript.
 
 ## what are neural nets this pakage have ?
 - [x] Vanilla neural network
-- [ ] RNN - ( under construction )
-- [ ] LSTM
+- [x] RNN 
+- [ ] LSTM - ( under construction )
 - [ ] CNN
 
 ### How to use this pakage ?
@@ -24,8 +24,14 @@ const construct = deepjs.constructor;
 
 ```javascript
 const model = new deepjs.StandardNet();
-// or else
-const model = new deepjs.VanillaNet();
+
+// available neural networks
+
+// feed forword neural network
+new deepjs.StandardNet();
+
+// recurrent neural network
+new deepjs.recurrent.rnn();
 ```
 
 * build layers
@@ -48,6 +54,10 @@ const model = new deepjs.VanillaNet();
         // softmax 
     })
     ```
+    * Construct the parameters using construct method:
+    ```javascript
+    model.construct() // this should be called before train method
+    ```
 
 * Train the model
 
@@ -56,19 +66,46 @@ model.train(
     { 
         inputs: [                        
             // Inputs..
-            [1, 1] //...           
-            [0, 0] //...           
+            // FOR NN
+            [1, 1] // i = 0
+            [0, 0] // i = 1
+
+            // FOR RNN
+            // i = 0
+            [
+                [1, 1], // t = 0
+                [0, 0], // t = 1
+            ],
+            // i = 1
+            [
+                [1, 1], // t = 0
+                [0, 0], // t = 1
+            ],
         ],
         outputs: [       
             // Respective outputs..   
-            [0] //...           
-            [1] //...                             
+            // FOR NN
+            [0] // o = 0
+            [1] // o = 1
+        
+            // FOR RNN
+            // o = 0
+            [
+                [1], // t = 0
+                [0], // t = 1
+            ],
+            // o = 1
+            [
+                [1], // t = 0
+                [0], // t = 1
+            ],
+            
         ],
         learningRate: 0.04,
         iterations: 100, 
         costfunction: construct.costfn.CrossEntropy, // specify loss function
         log: (iteration, err)=>{ console.log(iteration, err) }, // custom log method
-        logAt: 50 || false, // it will log after every 50 iteration
+        logAt: n || false, // it will log after every n iteration
         dropoutAll: true || false, // false        
     }
 )
@@ -80,3 +117,4 @@ model.train(
 model.predict([1, 1]);
 model.predict([0, 0]);
 ```
+
