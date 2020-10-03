@@ -5,11 +5,11 @@ module.exports.genRandom = (n) => {
     return gaussianRandom(0, 1) * Math.sqrt(1/n)
 }
 
-module.exports.genRandomMatrix = (row, column, n) => {
+module.exports.genRandomMatrix = (row, column) => {
     let res = Matrix.genEmptyMatrix(row, column);
     for(let r = 0; r < row; r++){
         for(let c = 0; c < column; c++){
-            res[r][c] = gaussianRandom(0, 1) * Math.sqrt(1/n);
+            res[r][c] = gaussianRandom(0, 1) * Math.sqrt(1/column);
         }
     }
 

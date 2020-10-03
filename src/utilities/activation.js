@@ -28,7 +28,17 @@ class act{
     }
 }
 
-module.exports = class activation extends act{    
+module.exports = class activation extends act{
+    mini(){
+        return {
+            sig: super.sig,
+            sigPrime: super.sigPrime,
+
+            tanh: super.tanh,
+            tanhPrime: super.tanhPrime,
+        }
+    }
+
     sig(zArr = []){
         const res = [];
         zArr.forEach(z => {
