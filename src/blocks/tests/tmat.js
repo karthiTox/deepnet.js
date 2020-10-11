@@ -1,4 +1,211 @@
-class tensorfn{
+class tensorfn{    
+    findshape(mat) {
+        if(Array.isArray(mat)){
+            const shape = [];
+            shape.push(mat.length);
+            this.findshape(mat[0]).forEach(v => {
+                shape.push(v)
+            });
+            return shape;
+        }else{        
+            return []
+        }
+    }
+
+    extract(mat){
+        if(Array.isArray(mat)){
+            const elements = [];        
+            mat.forEach(m => {
+                this.extract(m).forEach(v => {
+                    elements.push(v)
+                });
+            })
+            return elements;
+        }else{        
+            return [mat]
+        }
+    }
+ 
+    ndArrayOne(shape = [4]) {
+        console.log(shape, val)
+        let res = []
+        for (let s = 0; s < shape[0]; s++) {
+            res.push(shape.length <= 1 ? 1 : this.gen(shape.slice(1)));
+        }
+        return res
+    }
+
+    ndArrayZero(shape = [4]) {
+        console.log(shape, val)
+        let res = []
+        for (let s = 0; s < shape[0]; s++) {
+            res.push(shape.length <= 0 ? 1 : this.gen(shape.slice(1)));
+        }
+        return res
+    }
+
+    genOne(shape){        
+        return new tensor(new Array(shape.reduce((a, b) => a * b)).fill(1), shape)
+    }
+
+    genZero(shape){        
+        return new tensor(new Array(shape.reduce((a, b) => a * b)).fill(0), shape)
+    }
+
+    build(shape = [], val = []) {
+        if(!Array.isArray(val)) return val
+        const res = []
+        for (let s = 0; s < shape[0]; s++) {
+            res.push(
+                shape.length == 1 
+                    ? val[s] 
+                    : this.build(
+                        shape.slice(1), 
+                        val.slice(s * Math.floor(val.length/shape[0]), s * Math.floor(val.length/shape[0]) + shape.slice(1).reduce((a, b) => a*b))
+                    )
+            );
+        }
+        return res
+    }
+
+    // operations 
+
+    transpose2d(a){
+        let res = [];
+        const s = a.shape.slice(a.shape.length - 2);
+        const r = s[0];
+        const c = s[1];
+
+        for (let i = 0; i < r; i++) {
+            a.val.slice(i * c, i * c + c).forEach((component, index) => {
+                res[index * c + i] = component;
+            })
+        }    
+        res = res.filter((el) => {
+            return el != null;
+        })
+        
+        let new_Shape = a.shape;
+        let temp = new_Shape[new_Shape.length - 2];        
+        new_Shape[new_Shape.length - 2] = new_Shape[new_Shape.length - 1];
+        new_Shape[new_Shape.length - 1] = temp
+        
+        return new tensor(res, new_Shape, a.dtype)    
+    }
+
+    transpose(a){                
+        const total = a.shape.slice(0, a.shape.length - 2).reduce((a, b) => a * b);
+        const matshape = a.shape.slice(a.shape.length - 2);
+        const len = matshape.reduce((a, b) => a * b);
+        let result = []        
+        for (let c = 0; c < total; c++) {            
+            result = result.concat(
+                this.transpose2d(
+                    new tensor(a.val.slice(c * len, c * len + len), matshape)
+                ).val
+            );
+        }
+        
+        let new_Shape = a.shape;
+        let temp = new_Shape[new_Shape.length - 2];        
+        new_Shape[new_Shape.length - 2] = new_Shape[new_Shape.length - 1];
+        new_Shape[new_Shape.length - 1] = temp
+        return new tensor(result, new_Shape, a.dtype)
+    }
+
+    add(a, b){
+        if(a.rank == b.rank){
+            if(a.rank == 0){
+                return new tensor(a.val + b.val);
+            }
+            return new tensor(a.val.map((a, i) => a + b.val[i]));
+        }
+
+        return a;
+    }
+
+    test(a, b, type = 'add'){
+        let tensor_a = a.component
+        let tensor_b = b.component
+
+        if(tensor_a.rank == tensor_b.rank){
+            if(tensor_a.rank == 0){
+                return new node(
+                    new tensor(
+                        type == 'add' 
+                        ? tensor_a.val + tensor_b.val 
+                        : 
+                        type == 'multiply'
+                        ? tensor_a.val * tensor_b.val 
+                        : 0
+                        ),
+                    new edge(tensor_b, a),
+                    new edge(tensor_a, b),
+                )
+            }
+            return new node(
+                new tensor(
+                    type == 'add'         
+                        ? tensor_a.val.map((a, i) => a + tensor_b.val[i])
+                        : 
+                        type == 'multiply'
+                        ? tensor_a.val.map((a, i) => a * tensor_b.val[i])
+                        : 0),
+                new edge(tensor_b, a),
+                new edge(tensor_a, b),
+            )
+        }       
+    }
+    
+    multiply(a, b){
+        let tensor_a = a.component
+        let tensor_b = b.component
+
+        if(tensor_a.rank == tensor_b.rank){
+            if(tensor_a.rank == 0){
+                return new node(
+                    new tensor(tensor_a.val * tensor_b.val),
+                    new edge(tensor_b, a),
+                    new edge(tensor_a, b),
+                )
+            }
+            return new node(
+                new tensor(tensor_a.val.map((a, i) => a * tensor_b.val[i])),                
+                new edge(tensor_b, a),
+                new edge(tensor_a, b),
+            )
+        }       
+    }
+
+    sub(a, b){
+        if(a.rank == b.rank){
+            if(a.rank == 0){
+                return new tensor(a.val - b.val);
+            }
+            return new tensor(a.val.map((a, i) => a - b.val[i]));
+        }
+
+        return a;
+    }
+
+}
+
+class tensor{
+    constructor(val, shape, dtype){
+        if(typeof(val) == 'number'){
+            this.val = val
+            this.shape = [];
+            this.rank = 0;
+            this.dtype = dtype == 'float' ? 'float' : 'int';
+        }else{            
+            this.val = [];
+            this.shape = shape ? shape : this.findshape(val);
+            this.val = this.extract(val)
+            this.rank = this.shape.length;
+            this.dtype = dtype == 'float' ? 'float' : 'int';
+        }        
+    }
+
     findshape(mat) {
         if(Array.isArray(mat)){
             const shape = [];
@@ -26,128 +233,95 @@ class tensorfn{
         }
     }
 
-    
-    
-    genOne(shape = [4]) {
-        console.log(shape, val)
-        let res = []
-        for (let s = 0; s < shape[0]; s++) {
-            res.push(shape.length <= 1 ? 1 : this.gen(shape.slice(1)));
-        }
-        return res
+    toString(){
+        // build and return 
+        return JSON.stringify(this.val)
     }
 
-    genZero(shape = [4]) {
-        console.log(shape, val)
-        let res = []
-        for (let s = 0; s < shape[0]; s++) {
-            res.push(shape.length <= 0 ? 1 : this.gen(shape.slice(1)));
-        }
-        return res
-    }
-
-    build(shape = [], val = []) {
-        if(!Array.isArray(val)) return val
-        const res = []
-        for (let s = 0; s < shape[0]; s++) {
-            res.push(
-                shape.length == 1 
-                    ? val[s] 
-                    : this.build_matrix(
-                        shape.slice(1), 
-                        val.slice(s * Math.floor(val.length/shape[0]), s * Math.floor(val.length/shape[0]) + shape.slice(1).reduce((a, b) => a*b))
-                    )
-            );
-        }
-        return res
-    }
-
-    
-    transpose(a){
-        let res = [];
-        const s = a.shape.slice(a.shape.length - 2);
-        const r = s[0];
-        const c = s[1];
-
-        for (let i = 0; i < r; i++) {
-            a.val.slice(i * c, i * c + c).forEach((component, index) => {
-                res[index * c + i] = component
-            })
-        }
-
-        res = res.filter((el) => {
-            return el != null;
-        })
-        
-        let new_Shape = a.shape;
-        let temp = new_Shape[new_Shape.length - 2];        
-        new_Shape[new_Shape.length - 2] = new_Shape[new_Shape.length - 1];
-        new_Shape[new_Shape.length - 1] = temp
-        
-        return new tensor(res, new_Shape, a.dtype)    
-    }
-
-    add(a, b){
-        return a.val.map((a, i) => a + b.val[i])
-    }
-
-    sub(a, b){
-        return a.val.map((a, i) => a - b.val[i])
-    }
-
-    multiply(a, b){
-        return a.val.map((a, i) => a * b.val[i])        
+    axes(index){        
+        const shape = this.shape[0];
+        const start = this.val.length / shape;
+        return new tensor(Array.from(this.val.slice(index * start, index * start + start)), this.shape.slice(1), this.dtype);                  
     }
 }
 
-class tensor extends tensorfn{
-    constructor(val, shape, dtype){
-            super()            
-            this.shape = shape ? shape : this.findshape(val);
-            this.dtype = dtype;
-            this.val = this.extract(val);
-            switch (dtype) {
-                case 'float32':
-                    this.val = new Float32Array(this.val);
-                    break;
-                case 'float64':
-                    this.val = new Float64Array(this.val);
-                    break;
-                case 'int8':
-                    this.val = new Int8Array(this.val);
-                    break;
-                case 'int16':
-                    this.val = new Int16Array(this.val);
-                    break;
-                case 'int32':
-                    this.val = new Int32Array(this.val);
-                    break;
-                default:
-                    this.val = new Float32Array(this.val);
-            }
-            this.props = {
-                rank : this.shape.length,
-            }
+class node{
+    constructor(val){
+        this.component = val;
+        this.grad = new node(new tensor(this.component.val.map(v => 0)));
+        this.edges = [];
+        for (let i = 1; i < arguments.length; i++) {
+            this.edges.push(arguments[i]); // edge
+        }
     }
+}
 
-    check_val(){
-        return this.val.length == this.shape.reduce((a, b) => a * b);
+class edge{
+    constructor(val){
+        this.component = val;
+
+        this.nodes = [];
+        for (let i = 1; i < arguments.length; i++) {
+            this.nodes.push(arguments[i]); // node
+        }
     }
+}
 
-
-    print(){
-        console.log(
-            this.build(this.shape, this.val),
-        )
+class cgraph extends tensorfn{
+    travel(z = new node(1), propToPrint = 'component', edge = false){
+        console.log(z[propToPrint]);
+    
+        z.edges.forEach(e => {
+            edge ? console.log(e[propToPrint], "<== edge") : edge;
+    
+            e.nodes.forEach(n => {
+                this.travel(n, propToPrint)
+            })
+        })
     }
-
+    
+    backpass(z = new node(1), diff = new node(1)){
+        z.grad = this.test(z.grad, diff, 'add');
+    
+        z.edges.forEach(e => {
+            e.nodes.forEach(n => {
+                this.backpass(n, this.test(e.component, diff, 'multiply'))
+            })
+        })
+    }
+    
+    update_loss(z = new node(1), alpha = 0.04){
+        z.component -= z.grad * alpha;
+    
+        z.edges.forEach(e => {
+            e.nodes.forEach(n => {
+                this.update_loss(n, alpha)
+            })
+        })
+    }
+    
+    grad_zero(z = new node(1)){
+        z.grad = 0;
+    
+        z.edges.forEach(e => {
+            e.nodes.forEach(n => {
+                this.grad_zero(n)
+            })
+        })
+    }
 }
 
 function test(){
-    const a = new tensor(val = [1, 2], null, dtype = 'float32')
-    a.print()
-    const ten = new tensorfn();
-    console.log(ten.sub(a, a))
+    const cg = new cgraph()
+    const tenfn = new tensorfn()
+    const a = new node(new tensor([1]));
+    const b = new node(new tensor([2]));
+    const result = tenfn.multiply(a, b)
+
+    cg.travel(result)
+    cg.backpass(result, new tensor(result.component.val.map(v => 1)))
+    console.log("test----------")
+    cg.travel(result)
 }
 
 test()
@@ -264,3 +438,32 @@ test()
 // console.log(
 //     JSON.stringify(matmul(i, i))
 // )
+
+
+
+
+
+
+
+
+
+
+// switch (dtype) {
+//     case 'float32':
+//         this.val = new Float32Array(this.val);
+//         break;
+//     case 'float64':
+//         this.val = new Float64Array(this.val);
+//         break;
+//     case 'int8':
+//         this.val = new Int8Array(this.val);
+//         break;
+//     case 'int16':
+//         this.val = new Int16Array(this.val);
+//         break;
+//     case 'int32':
+//         this.val = new Int32Array(this.val);
+//         break;
+//     default:
+//         this.val = new Float32Array(this.val);
+// }

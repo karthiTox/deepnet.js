@@ -1,21 +1,30 @@
 const { activation } = require("../../utilities/util");
 
-function node(val){
-    this.val = val;
-    this.grad = 0;
-
-    this.edges = [];
-    for (let i = 1; i < arguments.length; i++) {
-        this.edges.push(arguments[i]); // edge
+class node{
+    constructor(val){
+        this.component = val;
+        this.grad = 0;
+        this.edges = [];
+        for (let i = 1; i < arguments.length; i++) {
+            this.edges.push(arguments[i]); // edge
+        }
     }
 }
 
-function edge(val){
-    this.val = val;
+class edge{
+    constructor(val){
+        this.component = val;
 
-    this.nodes = [];
-    for (let i = 1; i < arguments.length; i++) {
-        this.nodes.push(arguments[i]); // node
+        this.nodes = [];
+        for (let i = 1; i < arguments.length; i++) {
+            this.nodes.push(arguments[i]); // node
+        }
+    }
+}
+
+class cgraph{
+    insert(){
+        return new node(...arguments);
     }
 }
 
