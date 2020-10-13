@@ -1,11 +1,12 @@
 import numpy
 
-err = numpy.array(
-   [[1], [1]]
-)
 
 a = numpy.array(
-    [[1]]
-)
+    [1, 2, 3, 4]
+).reshape([2, 2, 1])
 
-print(err @ a)
+b = numpy.array(
+    [1, 2, 3, 4]
+).reshape([2, 1, 2])
+
+print(a @ b)

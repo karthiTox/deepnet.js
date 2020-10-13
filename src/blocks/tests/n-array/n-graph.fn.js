@@ -1,5 +1,6 @@
 const narray = require('./n-array');
 const narray_fn = require('./n-array.fn');
+const { activation } = require("../../../utilities/util");
 
 class node extends narray{
     constructor(val, shape, edges = []){
@@ -88,12 +89,21 @@ class ngraph extends narray_fn{
             new edge(
                 super.transpose_internal_1(a.build()),
                 null,    
-                (edge_value, diff) => {console.log(edge_value.build(), diff.build()); return super.matmul_iternal_2(edge_value.build(), diff.build()) }, b)
+                (edge_value, diff) => {return super.matmul(edge_value, diff)}, b)
         )
     }
 
-    weights_upda_internal(edge_values, diff){
-        
+    sig(a){
+        return new node(
+            a.val.map(v => activation.mini().sig(v)),
+            a.shape,
+            new edge(
+                a.val.map(v => activation.mini().sigPrime(v)),
+                a.shape,
+                this.multiply_internal,
+                a
+            )
+        )
     }
     
     travel(z, propToPrint = 'component', edge = false){
@@ -108,12 +118,22 @@ class ngraph extends narray_fn{
         })
     }
         
-    backpass(z, diff){
+    backpass(z, diff){        
         z.grad = super.add(z.grad, diff);
         
         z.edges.forEach(e => {
             e.pointers.forEach(n => {
                 this.backpass(n, e.operation(e, diff))
+            })
+        })
+    }
+
+    update_loss(z = new node(1), alpha = 0.04){        
+        z.val = z.val.map((a, i) => a - (z.grad.val[i] * alpha))
+    
+        z.edges.forEach(e => {
+            e.pointers.forEach(n => {
+                this.update_loss(n, alpha)
             })
         })
     }

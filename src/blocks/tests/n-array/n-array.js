@@ -1,4 +1,4 @@
-module.exports = class narray{
+module.exports = class ndarray{
     constructor(val, shape){
         this.val = new Array(val);        
         this.shape = shape ? shape : this.findshape(val);
