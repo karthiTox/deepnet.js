@@ -1,4 +1,4 @@
-const util = require("./utilities/util")
+const util = require("../src/utilities/util")
 
 module.exports.activation = {
     sig : [util.activation.sig, util.activation.sigPrime],

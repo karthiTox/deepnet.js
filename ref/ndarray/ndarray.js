@@ -1,9 +1,11 @@
 module.exports = class ndarray{
     constructor(val, shape){
-        this.val = new Array(val);        
-        this.shape = shape ? shape : this.findshape(val);
-        this.val = this.extract(val);
-        this.rank = this.shape.length;        
+        this.val = val ? new Array(val) : val;        
+        this.shape = val 
+                ? shape ? shape : this.findshape(val)
+                : val
+        this.val = val ? this.extract(this.val) : val;
+        this.rank = val? this.shape.length : val;        
     }
 
     findshape(mat) {
@@ -46,6 +48,33 @@ module.exports = class ndarray{
             );
         }
         return res
+    }
+
+    print(){
+        let res = JSON.stringify(this.build());
+        let newstr = ''
+
+        let count = 0;
+        for(let cf = 0; cf < res.length; cf++){
+            if(res[cf] == '['){
+                count++;
+            }else{
+                break;
+            }
+        }
+        for(let c = 0; c < res.length; c++){            
+            if(res[c] == ',' && res[c + 1] == '['){
+                let cn_count = 0;
+                for(let cn = c+1; cn < res.length; cn++){
+                    if(res[cn] != '[') break
+                    cn_count += 1;
+                }
+                newstr += '\n'.repeat(cn_count) + ' '.repeat(count - cn_count);                                      
+                continue;
+            }            
+            newstr += res[c];
+        }          
+        console.log(this.constructor.name+'\n\n',newstr)
     }
 }
 
