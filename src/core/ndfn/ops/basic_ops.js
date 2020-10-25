@@ -67,6 +67,7 @@ module.exports.sub = function(a, b, return_type){
     )
 }
 
+module.exports.multiply = _multiply;
 /**
  * Returns an multiplication of two ndarray 
  * @param {ndarray} a ndarray or ndvertex
@@ -76,11 +77,11 @@ module.exports.sub = function(a, b, return_type){
  * @returns {ndarray} if return_type == 'ndarray' it will return ndarray
  * @returns {ndvertex} if return_type == 'ndvertex' it will return ndvertex
  */
-module.exports.multiply = function(a, b, return_type){       
+function _multiply(a, b, return_type){       
     const res = a.val.map((a, i) => a * b.val[i]);
     const shape = Array.from(a.shape);
     const operation = (diff, edge_val) => {
-        return this.multiply(diff, edge_val, 'ndarray')
+        return _multiply(diff, edge_val, 'ndarray')
     }
 
     if(return_type == 'ndarray') 

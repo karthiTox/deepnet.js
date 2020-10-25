@@ -1,5 +1,0 @@
-class loss{
-    feed(input){
-        
-    }
-}

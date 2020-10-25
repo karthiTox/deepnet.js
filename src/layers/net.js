@@ -1,15 +1,15 @@
 const { ops, objs } = require('../core/ndfn/ndfn');
 const { backpass, grad_zero, update_loss } = ops;
 const dense = require('./dense.layer');
+const seqdense = require('./seqdense.layer');
+const rnn = require('./rnn.layer');
+const lstm = require('./lstm.layer');
+const { loss } = require('./loss.fn');
 
 class model{
     constructor(){
         this.layers = [
-            new dense(1, 2), 
-            new dense(2, 5),
-            new dense(5, 5),
-            new dense(5, 5),
-            new dense(5, 5),
+            new lstm(2, 2),
         ];      
     }
 
@@ -24,20 +24,47 @@ class model{
         return res;
     }
 
-    backpropagation(){
-        backpass(this.res, new objs.ndarray(this.res.val.map((v, i) => v - (i == 2 ? 1 : 0)), this.res.shape));    
-        update_loss(this.res, 0.04);    
-        grad_zero(this.res)    
+    backpropagation(output){
+        for(let r = this.res.length-1; r >= 0; r--){
+            const res = this.res[r];
+            backpass(res, new objs.ndarray(res.val.map((v, i) => v - output[i]), res.shape));    
+            update_loss(res, 0.04);    
+            grad_zero(res)            
+        }
     }
 }
 
 const mod = new model();
 
-for(let l = 0; l < 1000; l++){
-    mod.feedForword(new objs.ndvertex([1, 1], [1, 1]));
-    mod.backpropagation();
+for(let l = 0; l < 100; l++){
+    mod.feedForword( 
+        [
+            new objs.ndvertex([1, 1], [1, 2]), 
+            new objs.ndvertex([0, 0], [1, 2]),
+        ] 
+    );
+    mod.backpropagation([0, 1]);
+
+    mod.feedForword( 
+        [
+            new objs.ndvertex([0, 0], [1, 2]), 
+            new objs.ndvertex([0, 0], [1, 2]),        
+        ] 
+    );
+    mod.backpropagation([1, 0]);
 }
 
 console.log(
-    mod.feedForword(new objs.ndvertex([1], [1, 1])).val
+    mod.feedForword( 
+        [
+            new objs.ndvertex([1, 1], [1, 2]), 
+            new objs.ndvertex([0, 0], [1, 2]),
+        ] 
+    ),
+    mod.feedForword( 
+        [
+            new objs.ndvertex([0, 0], [1, 2]), 
+            new objs.ndvertex([0, 0], [1, 2]),            
+        ] 
+    )
 )
