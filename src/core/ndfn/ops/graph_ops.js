@@ -5,7 +5,8 @@ module.exports = {
     traversal: traversal,
     backpass: backpass,
     update_loss: update_loss,
-    grad_zero: grad_zero
+    grad_zero: grad_zero,
+    detach: detach
 }
 
 // Graph methods
@@ -66,5 +67,16 @@ function grad_zero(z){
         e.pointers.forEach(n => {
             grad_zero(n)
         })
+    })
+}
+
+
+function detach(z){
+    z.edges.forEach((e, i) => {        
+        e.pointers.forEach((v, i) => {
+            detach(v);
+            delete e.pointers[i];
+        })
+        delete z.edges[i];
     })
 }

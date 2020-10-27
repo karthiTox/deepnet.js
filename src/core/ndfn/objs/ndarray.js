@@ -72,9 +72,12 @@ module.exports = class ndarray{
                 newstr += '\n'.repeat(cn_count) + ' '.repeat(count - cn_count);                                      
                 continue;
             }            
-            newstr += res[c];
+            newstr += res[c] == ','? ' ' : res[c];
         }          
-        console.log(this.constructor.name+'\n\n',newstr)
+        console.log(this.constructor.name)
+        console.log(' ');
+        console.log(newstr)
+        console.log(' ');
     }
 }
 

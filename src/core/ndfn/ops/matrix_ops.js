@@ -5,8 +5,13 @@ module.exports = {
     transpose: transpose,
     matmul: matmul,
 }
+// --------------------- MATRIX MANUPULATION OPS ---------------
+module.exports.concat = function concat(a, b, axis = 0) {
+    const shape = a.shape;
+    shape[axis] += b.shape[axis];
+    return new ndarray(a.val.concat(b.val), shape)
+}
 
-// => results are wrong for square matrix 
 function expand_to(a, shape, return_type){
     const res = _expand_to(a, shape)
     const org_shape = Array.from(a.shape)
@@ -31,21 +36,24 @@ function _expand_to(
     a, 
     shape, 
     len = shape.length, 
-    step = _cstep(a.shape), 
+    step = _cstep(_add_dim(a.shape, len)), 
     index = []
 ){
-    console.log(step)
     const arr = []
     for (let s = 0; s < (shape[0] || 0); s++) {        
-        const copy = index.concat([s])
-        _expand_to(a, shape.slice(1), len, step, copy).forEach(el => {
+        let indx = index.concat([s])
+        _expand_to(a, shape.slice(1), len, step, indx).forEach(el => {
             arr.push(el)
         });
     }
     if(index.length == len){         
-        return [a.val[_cindex(index, step) % (a.val.length)]]
+        return [a.val[_cdiv_index(index, _add_dim(a.shape, len), step)]]
     }
     return arr
+}
+
+function _cdiv_index(index = [], shape = [], step = []){
+    return _cindex(index.map((v, i) => v % shape[i]), step)
 }
 
 function _add_dim(shape, tot_dim){

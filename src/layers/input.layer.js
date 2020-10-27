@@ -1,0 +1,5 @@
+class input{
+    constructor(){
+        
+    }
+}
