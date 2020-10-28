@@ -9,7 +9,8 @@ const { loss } = require('./loss.fn');
 class model{
     constructor(){
         this.layers = [
-            new lstm(2, 2),
+            new lstm(1, 2),
+            new lstm(2, 1),
         ];      
     }
 
@@ -39,16 +40,16 @@ const mod = new model();
 for(let l = 0; l < 100; l++){
     mod.feedForword( 
         [
-            new objs.ndvertex([1, 1], [1, 2]), 
-            new objs.ndvertex([0, 0], [1, 2]),
+            new objs.ndvertex([1], [1, 1]), 
+            new objs.ndvertex([0], [1, 1]),
         ] 
     );
     mod.backpropagation([0, 1]);
 
     mod.feedForword( 
         [
-            new objs.ndvertex([0, 0], [1, 2]), 
-            new objs.ndvertex([0, 0], [1, 2]),        
+            new objs.ndvertex([0], [1, 1]), 
+            new objs.ndvertex([0], [1, 1]),        
         ] 
     );
     mod.backpropagation([1, 0]);

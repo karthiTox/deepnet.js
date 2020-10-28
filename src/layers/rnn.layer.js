@@ -30,6 +30,6 @@ module.exports = class rnn{
             res.push(prev_output)
         }
 
-        return [prev_output]
+        return res
     }    
 }

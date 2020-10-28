@@ -1,17 +1,41 @@
+const { ndvertex, ndarray } = require('../../core/ndfn/objs/objs');
+const { add } = require('../../core/ndfn/ops/basic_ops');
+const { traversal } = require('../../core/ndfn/ops/graph_ops');
 const dense = require('../dense.layer');
-const merge = require('../merge.layer');
+const rnn = require('../rnn.layer');
+const lstm = require('../lstm.layer');
+const merge = require('../merge.methods');
+
 const lgraph = require('./layer_graph')
-const lg = new lgraph();
-const lv = lg.layerVertex;
+const model = new lgraph();
 
-const a = new lv(new dense(1, 2), null, null, 'first');
-const b = new lv(new dense(1, 2), null, null, 'first');
+const a = model.add({layer: new rnn(1, 5)})
+const b = model.add({layer: new rnn(5, 1)})
 
-const c = new lv(new dense(2, 5), [a, b], null, 'merge')
+for(let i = 0; i < 1000; i++){
+    model.feedForword(
+        [new ndvertex([0], [1, 1]), new ndvertex([0], [1, 1])]
+    )
+    model.backpropagation(
+        [new ndarray([0], [1, 1]), new ndarray([1], [1, 1])]
+        );
 
-for(let i = 0; i < 100; i++){
-    lg.feedForword(c)
-    lg.backpropagation([0, 1, 0, 1, 1])
+    model.feedForword(
+        [new ndvertex([1], [1, 1]), new ndvertex([0], [1, 1])]
+    )
+    model.backpropagation(
+        [new ndarray([0], [1, 1]), new ndarray([0], [1, 1])]
+    );
 }
 
-lg.feedForword(c).print()
+console.log(
+    model.feedForword([new ndvertex([0], [1, 1]), new ndvertex([0], [1, 1])]).forEach(v =>{
+        v.forEach(v => v.print())
+    })
+)
+
+// function run(){
+//     const res = [new ndvertex([1])].reduce((a, b) => add(a, b))
+//     console.log(res)
+// }
+// run()

@@ -1,15 +1,81 @@
+const { isYieldExpression } = require("typescript");
 const { ndarray, ndvertex, ndedge } = require("../objs/objs");
 
 module.exports = {
     expand_to: expand_to,
     transpose: transpose,
     matmul: matmul,
+    concat: concat,
 }
 // --------------------- MATRIX MANUPULATION OPS ---------------
-module.exports.concat = function concat(a, b, axis = 0) {
-    const shape = a.shape;
+function concat(a, b, axis = 0, return_type) {
+    const _a = _split_till(a.val, a.shape, axis);
+    const _b = _split_till(b.val, b.shape, axis);
+
+    const res = [];
+
+    for(let _sa = 0; _sa < _a.length; _sa++){
+        res.push(_a[_sa]);
+        res.push(_b[_sa]);
+    }
+
+    const shape = Array.from(a.shape);
     shape[axis] += b.shape[axis];
-    return new ndarray(a.val.concat(b.val), shape)
+
+    if(return_type == "ndarray")
+    return new ndarray(res, shape);
+
+    const rato = a.shape[axis] / (a.shape[axis] + b.shape[axis]);
+    return new ndvertex(
+        res, 
+        shape,
+        new ndedge(null, null,
+            (diff) => {
+                return disjoin(diff, axis, rato)[0];
+            },
+            a            
+        ),
+        new ndedge(null, null,
+            (diff) => {
+                return disjoin(diff, axis, rato)[1];
+            },
+            b            
+        )
+    )
+}
+
+function disjoin(a, axis = 0, ratio = 1/2){
+    const _a = _split_till(a.val, a.shape, axis);
+
+    const res1 = [];
+    const res2 = [];
+    
+    for(let _sa = 0; _sa < _a.length; _sa++){
+        const middle = _a[_sa].length * ratio
+        res1.push(_a[_sa].slice(0, middle));        
+        res2.push(_a[_sa].slice(middle));        
+    }
+
+    const shape1 = Array.from(a.shape);
+    const shape2 = Array.from(a.shape);
+    shape1[axis] *= ratio;
+    shape2[axis] = shape2[axis] - (shape2[axis] * ratio);
+
+    return [new ndarray(res1, shape1), new ndarray(res2, shape2)];
+}
+
+function _split_till(val = [], shape=[], axis = 0){
+    let a_shape = shape.slice(axis);
+
+    let tot_el = a_shape.reduce((a, b) => a * b);
+
+    const res = [];
+    for (let i = 0; i < val.length / tot_el; i++) {           
+        res.push(
+            val.slice(i * tot_el, i * tot_el + tot_el)
+        )                                
+    }
+    return res;
 }
 
 function expand_to(a, shape, return_type){
