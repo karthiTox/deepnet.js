@@ -9,6 +9,8 @@ deepnet pakage provides:
 * ndarray computation with cpu using computational graph 
 * neural network implemented on top of the ndarray
 
+This pakage is not yet fully completed
+
 ## What are the neural net layers this pakage have ?
 - [x] Dense
 - [x] RNN
