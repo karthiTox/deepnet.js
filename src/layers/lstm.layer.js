@@ -3,14 +3,16 @@ const { genRan, genZero, apply_activation, add, multiply, matmul, transpose } = 
 const act = require('../core/util/activation');
 
 module.exports = class lstm{
-    constructor(prev_neurons, neurons){
+    constructor(prev_neurons, neurons, return_seq = true){
         this.prev_neurons = prev_neurons;
         this.neurons = neurons;
 
         this.weight = genRan([neurons, prev_neurons]);
         this.biases = genRan([1, neurons]);
         
-        this.hiddenWeight = genRan([neurons, neurons]);        
+        this.hiddenWeight = genRan([neurons, neurons]); 
+        
+        this.return_seq = return_seq;
     }    
     
     feed(input = []){
@@ -51,6 +53,9 @@ module.exports = class lstm{
             res.push(prev_output);
         }
 
-        return res // [prev_output]
-    }    
+        if(this.return_seq)
+            return res;
+        else
+            prev_output;
+    }       
 }

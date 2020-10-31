@@ -21,9 +21,9 @@ module.exports = {
 
 function merge(res, method){
     if(!Array.isArray(res[0])){                
-        return res.reduce((a, b) => method(a, b)) 
+        return res.reduce((a, b) => method(a, b, a.shape.length-1)) 
     }else{                
         // [[ndarray{}], [ndarray{}]] 
-        return res.reduce((a, b) => a.map((v, i) => method(v, b[i])))
+        return res.reduce((a, b) => a.map((v, i) => method(v, b[i], v.shape.length-1)))
     }
 }

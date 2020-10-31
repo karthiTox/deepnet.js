@@ -1,9 +1,9 @@
 module.exports = class ndarray{
-    constructor(val, shape){
-        this.val = val ? new Array(val) : val;        
-        this.shape = val 
+    constructor(val = null, shape = null){
+        this.val = val ? new Array(val) : val;               
+        this.shape = val
                 ? shape ? shape : this.findshape(val)
-                : val
+                : val;
         this.val = val ? this.extract(this.val) : val;
         this.rank = val? this.shape.length : val;        
     }

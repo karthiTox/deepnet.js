@@ -3,118 +3,356 @@
 <img src="logo.png" width="200" height="200" />
 
 ## What is this ?
-this is a neural network pakage implemented for javascript.
+ndarray and dynamic neural network with javascript.
 
-## what are neural nets this pakage have ?
-- [x] Vanilla neural network
-- [x] RNN 
-- [ ] LSTM - ( under construction )
+deepnet pakage provides:
+* ndarray computation with cpu using computational graph 
+* neural network implemented on top of the ndarray
+
+## What are the neural net layers this pakage have ?
+- [x] Dense
+- [x] RNN
+- [x] LSTM
 - [ ] CNN
 
-### How to use this pakage ?
+## Examples
+
+### Auto grad
 
 * Import the required pakages
 
 ```javascript
-const deepjs = require("../index");
-const construct = deepjs.constructor;
+const deepnet = require('../src/index');
+const { ndarray, ndvertex } = deepnet.ndfn.objs;
+const ops = deepnet.ndfn.ops;
 ```
 
-* create the modal
+* ndarray:
+
+ndarray is used to do math operations over array currently this lib
+supports basic operation, matrix operation and manupuation but this 
+operations are not tracked while computation.
 
 ```javascript
-const model = new deepjs.StandardNet();
+const a = new ndarray(array, shape);
 
-// available neural networks
-
-// feed forword neural network
-new deepjs.StandardNet();
-
-// recurrent neural network
-new deepjs.recurrent.rnn();
+const a = new ndarray([1, 2, 3, 4], [2, 2]);
+const a = new ndarray([[1, 2], [3, 4]]);
 ```
 
-* build layers
+* ndvertex:
 
-    * build using create method:
+ndvertex is used to do math operations and this 
+operations are tracked while computation using cgraph.
+
+```javascript
+const a = new ndvertex(array, shape);
+
+const a = new ndvertex([1, 2, 3, 4], [2, 2]);
+const a = new ndvertex([[1, 2], [3, 4]]);
+```
+
+* Operations
+
+    *  Import the required pakages 
+    
     ```javascript
-    model.create({
-        layers:[2, 4], // [ number of nurons ]        
-    })
+    const {
+        add, sub, multiply, // basic ops 
+        expand_to, transpose, matmul, concat,// Matrix
+        traversal, backpass, update_loss, grad_zero, detach,
+        genRan, genZero,
+        apply_activation 
+    } = deepnet.ndfn.ops;
     ```
+    
+    operations always returns ndvertex by default
+    if you want to returntype as ndarray specify the return type while call 
 
-    * build using add method:
      ```javascript
-    model.add({
-        neurons: 1,
-        activation: construct.activation.reLU // specify the activation seperatly
-        // Activation functions :
-        // ReLU
-        // sigmoid
-        // softmax 
+    const a = new ndvertex([[1, 2], [3, 4]]);
+    const b = new ndvertex([[1, 2], [3, 4]]);
+    
+    add(a, b, 'ndarray'); // => returns ndarray
+    add(a, b); // => returns ndvertex
+
+    sub(a, b);
+    
+    multiply(a, b);
+    ```
+
+    Chain the operations together to do autograd
+
+     ```javascript
+    const a = new ndvertex([[1, 2]]);
+    const w = new ndvertex([[1, 2], [3, 4]]);
+    const b = new ndvertex([[1, 2], [3, 4]]);
+        
+    const tw = transpose(w);
+    const mul = matmul(a, tw);    
+    
+    const res = add(mul, b);
+    ```
+    After chaining the operation pass the result (ndvertex) to the backpass
+    
+    backpass(result, error) compute derivatives of every variable.
+    update_loss(res, alpha) updates the computed derivates of each ndvertex.
+    grad_zero(res) set grad to zero.
+    detach(res) removes the connection of the graph.
+
+     ```javascript
+    const a = new ndvertex([[1, 2]]);
+    const w = new ndvertex([[1, 2], [3, 4]]);
+    const b = new ndvertex([[1, 2], [3, 4]]);
+        
+    const tw = transpose(w);
+    const mul = matmul(a, tw);    
+    
+    const res = add(mul, b);
+
+    const init_value = new ndarray([[1, 1], [1, 1]]);    
+    backpass(res, err=init_value); 
+    update_loss(res, alpha=0.04);
+    grad_zero(res);
+    detach(res);
+    ```
+* Layer graph building procedure
+    Model is build using static layer graph which holds layers
+        
+        Dense  Dense
+           \    /
+           Dense
+
+    * How it create ? 
+    
+    initialize a graph:    
+    
+    ```javascript
+    const LayerGraph = deepnet.models.LayerGraph;
+    const model = new LayerGraph();
+    ```
+    Graph is created on fly using add method 
+
+    ```javascript
+    // const a = model.add(layer, parents, merge_function, Name_of_the_layer)
+    const a = model.add(new dense(1, 2), null, null, "a");
+    const b = model.add(new dense(1, 2), null, null, "b");
+    const c = model.add(new dense(4, 1), [a, b], deepnet.mergefn.concat, "c");    
+    
+    //  a  b 
+    //  \ /
+    //   c
+    ```
+    
+    ```javascript
+    model.feedForword(c,{
+        'a':[new ndvertex([[1]], [1, 1]), new ndvertex([[0]], [1, 1])],    
+        'b':[new ndvertex([[1]], [1, 1]), new ndvertex([[0]], [1, 1])],    
+    })    
+    model.backpropagation([[0], [1]]);
+    model.reset(c);
+    ```
+
+    * Creation flow
+
+    ```javascript
+    const a = model.add(new lstm(1, 2), null, null, "a");
+    ```
+    (a)
+
+    
+    ```javascript
+    const b = model.add(new lstm(1, 2), null, null, "a");
+    ```
+    (a)  (b)
+
+    ```javascript
+    // merging two sequence input or two non-seq input is applicable
+    // can't merge seq and non-seq input   
+    const c = model.add(new lstm(2, 1), [a, b], deepnet.mergefn.add, "c"); 
+    ```
+    (a)  (b)
+     \   /
+      (c)
+
+    
+    ```javascript
+    const d = model.add(new lstm(2, 1), [c], null, "c");        
+    ```
+    (a)  (b)
+     \   /
+      (c)
+       |
+      (d)
+
+    
+    ```javascript  
+    const e = model.add(new lstm(2, 1), [d], null, "c");    
+    const f = model.add(new lstm(2, 1), [d], null, "c");    
+    ```
+    (a)  (b)
+     \   /
+      (c)
+       |
+      (d)
+      / \
+    (e) (f)
+
+    Now, there are two outputs from (e) and (f) so to get an output from (e)
+    
+    model.feedForword(e) gives the result of e
+    model.feedForword(f) gives the result of f
+
+    ```javascript
+    /*
+    model.feedForword(final_pointer, inputs);
+
+    model.feedForword(final_pointer, inputs{
+        name_of_input_vertex_1: input_1,    
+        name_of_input_vertex_2: input_2,    
+    })
+    */
+
+    model.feedForword(e,{
+        'a':[ new ndvertex([[1]]), new ndvertex([[0]]) ], // for lstm and rnn  
+        'b':[ new ndvertex([[1]]), new ndvertex([[0]]) ], // for lstm and rnn          
     })
     ```
-    * Construct the parameters using construct method:
+
     ```javascript
-    model.construct() // this should be called before train method
+    // currently raw array is need to pass
+    // next build will change this method
+    model.backpropagation([
+        [0], // t1 
+        [1]  // t2
+    ]);
     ```
 
-* Train the model
+    * Rest()
+    it will reset output of every layer in the model. 
 
-```javascript
-model.train(
-    { 
-        inputs: [                        
-            // Inputs..
-            // FOR NN
-            [1, 1] // i = 0
-            [0, 0] // i = 1
+    Before pass:
 
-            // FOR RNN
-            // i = 0
-            [
-                [1, 1], // t = 0
-                [0, 0], // t = 1
-            ],
-            // i = 1
-            [
-                [1, 1], // t = 0
-                [0, 0], // t = 1
-            ],
-        ],
-        outputs: [       
-            // Respective outputs..   
-            // FOR NN
-            [0] // o = 0
-            [1] // o = 1
-        
-            // FOR RNN
-            // o = 0
-            [
-                [1], // t = 0
-                [0], // t = 1
-            ],
-            // o = 1
-            [
-                [1], // t = 0
-                [0], // t = 1
-            ],
-            
-        ],
-        learningRate: 0.04,
-        iterations: 100, 
-        costfunction: construct.costfn.CrossEntropy, // specify loss function
-        log: (iteration, err)=>{ console.log(iteration, err) }, // custom log method
-        logAt: n || false, // it will log after every n iteration
-        dropoutAll: true || false, // false        
-    }
-)
+      (a)  (b)
+       \   /
+        (c)
+         |
+        (d)
+        / \
+      (e) (f)
+
+    After pass:
+    
+        feedForword(e) - (e) vertex/layer flow from 
+        (a)(b) => (c) => (d) => (e)
+    
+        every vertex remmembers the output so when you feedforword next time it did not 
+        compute the values instead it returns output directly.
+    
+        (! - Output of the layer is remembered)
+
+      (a)!  (b)!
+       \   /
+        (c)!
+         |
+        (d)!
+        / \
+     (e)! (f)
+
+    next Pass:
+
+    feedForword(f):
+
+    (f) vertex/layer flow is not from the origin.
+    instead,
+    (d)! => (f)
+
+    if it needed to flow again from origin then you have to 
+    reset() before calling feedForword
+
+    ```javascript
+    model.feedForword(e,{
+        'a':[ new ndvertex([[1]]), new ndvertex([[0]]) ], // for lstm and rnn  
+        'b':[ new ndvertex([[1]]), new ndvertex([[0]]) ], // for lstm and rnn          
+    })
+
+    // (a)!  (b)!
+    //   \   /
+    //    (c)!
+    //     |
+    //    (d)!
+    //    / \
+    // (e)! (f)
+
+    reset(e) // <===========
+
+    // (a)   (b)
+    //   \   /
+    //    (c)
+    //     |
+    //    (d)
+    //    / \
+    // (e)  (f)
+
+    model.feedForword(f,{
+        'a':[ new ndvertex([[1]]), new ndvertex([[0]]) ], // for lstm and rnn  
+        'b':[ new ndvertex([[1]]), new ndvertex([[0]]) ], // for lstm and rnn          
+    })
+
+    // (a)!  (b)!
+    //   \   /
+    //    (c)!
+    //     |
+    //    (d)!
+    //    / \
+    // (e)  (f)!
+    ```
+
+
+* LSTM NETWORK EXAMPLE
+
+```js
+const deepnet = require('../src/index');
+const { ndarray, ndvertex } = deepnet.ndfn.objs;
+const { lstm, rnn, dense, seqdense } = deepnet.layers;
+const mergefn = deepnet.mergefn;
+
+const LayerGraph = deepnet.models.LayerGraph;
+const model = new LayerGraph();
+
+const a = model.add(new lstm(1, 2), null, null, "a");
+const b = model.add(new lstm(1, 2), null, null, "b");
+const c = model.add(new lstm(4, 1), [a, b], mergefn.concat, "c");
+
+// not used but connected
+const d = model.add(new seqdense(2, 1), [a, b], null, "d");
+
+// Training
+for(let i = 0; i < 1000; i++){
+    model.feedForword(c,{
+        'a':[new ndvertex([[1]], [1, 1]), new ndvertex([[0]], [1, 1])],    
+        'b':[new ndvertex([[1]], [1, 1]), new ndvertex([[0]], [1, 1])],    
+    })    
+    model.backpropagation([[0], [1]]);
+    model.reset(c);
+
+    model.feedForword(c,{
+        'a':[new ndvertex([[0]], [1, 1]), new ndvertex([[0]], [1, 1])],    
+        'b':[new ndvertex([[0]], [1, 1]), new ndvertex([[0]], [1, 1])],    
+    })    
+    model.backpropagation([[0], [0]])
+    model.reset(c)    
+}
+
+// Pridicting
+model.feedForword(c,{
+    'a':[new ndvertex([[1]], [1, 1]), new ndvertex([[0]], [1, 1])],    
+    'b':[new ndvertex([[1]], [1, 1]), new ndvertex([[0]], [1, 1])],    
+}).forEach(v => v.print());
+model.reset(c)    
+
+model.feedForword(c,{
+    'a':[new ndvertex([[0]], [1, 1]), new ndvertex([[0]], [1, 1])],    
+    'b':[new ndvertex([[0]], [1, 1]), new ndvertex([[0]], [1, 1])],    
+}).forEach(v => v.print());
 ```
-
-* Test the model
-
-```javascript
-model.predict([1, 1]);
-model.predict([0, 0]);
-```
-

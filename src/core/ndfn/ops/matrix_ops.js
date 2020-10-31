@@ -1,4 +1,3 @@
-const { isYieldExpression } = require("typescript");
 const { ndarray, ndvertex, ndedge } = require("../objs/objs");
 
 module.exports = {

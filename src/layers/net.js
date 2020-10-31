@@ -5,12 +5,14 @@ const seqdense = require('./seqdense.layer');
 const rnn = require('./rnn.layer');
 const lstm = require('./lstm.layer');
 const { loss } = require('./loss.fn');
+const { detach } = require('../core/ndfn/ops/graph_ops');
 
 class model{
     constructor(){
         this.layers = [
-            new lstm(1, 2),
-            new lstm(2, 1),
+            new lstm(1, 3),
+            new lstm(3, 1),
+            // new seqdense(3, 1)
         ];      
     }
 
@@ -25,22 +27,28 @@ class model{
         return res;
     }
 
-    backpropagation(output){
-        for(let r = this.res.length-1; r >= 0; r--){
-            const res = this.res[r];
-            backpass(res, new objs.ndarray(res.val.map((v, i) => v - output[i]), res.shape));    
-            update_loss(res, 0.04);    
-            grad_zero(res)            
+    backpropagation(output){        
+        for(let r = this.res.length-1; r >= 0; r--){            
+                const res = this.res[r];                
+                backpass(res, new objs.ndarray(res.val.map((v, i) => v - output[r]), res.shape));    
+                update_loss(res, 0.04);    
+                grad_zero(res)            
+            }
+            
+        for(let r = this.res.length-1; r >= 0; r--){            
+            const res = this.res[r];                            
+            detach(res)            
         }
+        // console.log(this.res)
     }
 }
 
 const mod = new model();
 
-for(let l = 0; l < 100; l++){
+for(let l = 0; l < 1000; l++){
     mod.feedForword( 
         [
-            new objs.ndvertex([1], [1, 1]), 
+            new objs.ndvertex([1], [1, 1]),             
             new objs.ndvertex([0], [1, 1]),
         ] 
     );
@@ -49,23 +57,24 @@ for(let l = 0; l < 100; l++){
     mod.feedForword( 
         [
             new objs.ndvertex([0], [1, 1]), 
-            new objs.ndvertex([0], [1, 1]),        
+            new objs.ndvertex([0], [1, 1]),                        
         ] 
     );
-    mod.backpropagation([1, 0]);
+    mod.backpropagation([0, 0]);
 }
 
 console.log(
     mod.feedForword( 
         [
-            new objs.ndvertex([1, 1], [1, 2]), 
-            new objs.ndvertex([0, 0], [1, 2]),
+            new objs.ndvertex([1], [1, 1]), 
+            new objs.ndvertex([0], [1, 1]),            
         ] 
     ),
+
     mod.feedForword( 
         [
-            new objs.ndvertex([0, 0], [1, 2]), 
-            new objs.ndvertex([0, 0], [1, 2]),            
+            new objs.ndvertex([0], [1, 1]), 
+            new objs.ndvertex([0], [1, 1]),                        
         ] 
-    )
+    ),
 )

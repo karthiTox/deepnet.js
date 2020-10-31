@@ -1,4 +1,3 @@
-const { isCallSignatureDeclaration } = require("typescript");
 const { add } = require("../../core/ndfn/ops/basic_ops");
 
 module.exports = class vertex{
