@@ -8,8 +8,7 @@ ndarray and dynamic neural network with javascript.
 deepnet pakage provides:
 * ndarray computation with cpu using computational graph 
 * neural network implemented on top of the ndarray
-
-This pakage is not yet fully completed
+* Build a model using layer graph instead of using array
 
 ## What are the neural net layers this pakage have ?
 - [x] Dense
@@ -31,9 +30,9 @@ const ops = deepnet.ndfn.ops;
 
 * ndarray:
 
-ndarray is used to do math operations over array currently this lib
-supports basic operation, matrix operation and manupuation but this 
-operations are not tracked while computation.
+ndarray is used to do math operations over array, currently this pakage
+supports basic operation, matrix operation and array manupuation, 
+ndarray is not tracked while computation. instead use ndvertex while using cgraph
 
 ```javascript
 const a = new ndarray(array, shape);
@@ -45,7 +44,7 @@ const a = new ndarray([[1, 2], [3, 4]]);
 * ndvertex:
 
 ndvertex is used to do math operations and this 
-operations are tracked while computation using cgraph.
+operations are tracked while computation.
 
 ```javascript
 const a = new ndvertex(array, shape);
@@ -69,7 +68,7 @@ const a = new ndvertex([[1, 2], [3, 4]]);
     ```
     
     operations always returns ndvertex by default
-    if you want to returntype as ndarray specify the return type while call 
+    if you want a returntype as ndarray specify the return type while function call 
 
      ```javascript
     const a = new ndvertex([[1, 2], [3, 4]]);
@@ -82,7 +81,8 @@ const a = new ndvertex([[1, 2], [3, 4]]);
     
     multiply(a, b);
     ```
-
+    * Chaining
+    
     Chain the operations together to do autograd
 
      ```javascript
@@ -95,12 +95,12 @@ const a = new ndvertex([[1, 2], [3, 4]]);
     
     const res = add(mul, b);
     ```
-    After chaining the operation pass the result (ndvertex) to the backpass
+    After chaining the operation pass the result (ndvertex) to the backpass.
     
-    backpass(result, error) compute derivatives of every variable.
-    update_loss(res, alpha) updates the computed derivates of each ndvertex.
-    grad_zero(res) set grad to zero.
-    detach(res) removes the connection of the graph.
+      * backpass(result, error) compute derivatives of every variable.
+      * update_loss(res, alpha) updates the computed derivates of each ndvertex.
+      * grad_zero(res) set grad to zero after updated.
+      * detach(res) removes the connection of between vertices.
 
      ```javascript
     const a = new ndvertex([[1, 2]]);
@@ -118,14 +118,17 @@ const a = new ndvertex([[1, 2], [3, 4]]);
     grad_zero(res);
     detach(res);
     ```
+## Layer Graph
+
+Layer Graph, instead of using array, use graph to store layers, the output of one vertex/layer is passed to 
+next vertex in next level. if vertex has two parents then the merge function is called before feed to layer.
+
 * Layer graph building procedure
-    Model is build using static layer graph which holds layers
         
         Dense  Dense
            \    /
            Dense
-
-    * How it create ? 
+    
     
     initialize a graph:    
     
@@ -133,7 +136,7 @@ const a = new ndvertex([[1, 2], [3, 4]]);
     const LayerGraph = deepnet.models.LayerGraph;
     const model = new LayerGraph();
     ```
-    Graph is created on fly using add method 
+    Graph is created on fly using add method
 
     ```javascript
     // const a = model.add(layer, parents, merge_function, Name_of_the_layer)
@@ -159,39 +162,40 @@ const a = new ndvertex([[1, 2], [3, 4]]);
 
     ```javascript
     const a = model.add(new lstm(1, 2), null, null, "a");
-    ```
+   
     (a)
-
+    ```
     
     ```javascript
     const b = model.add(new lstm(1, 2), null, null, "a");
-    ```
+    
     (a)  (b)
-
+    ```
+    
     ```javascript
     // merging two sequence input or two non-seq input is applicable
     // can't merge seq and non-seq input   
     const c = model.add(new lstm(2, 1), [a, b], deepnet.mergefn.add, "c"); 
-    ```
+    
     (a)  (b)
      \   /
       (c)
-
+    ```
     
     ```javascript
     const d = model.add(new lstm(2, 1), [c], null, "c");        
-    ```
+    
     (a)  (b)
      \   /
       (c)
        |
       (d)
-
+    ```
     
     ```javascript  
     const e = model.add(new lstm(2, 1), [d], null, "c");    
     const f = model.add(new lstm(2, 1), [d], null, "c");    
-    ```
+   
     (a)  (b)
      \   /
       (c)
@@ -199,11 +203,12 @@ const a = new ndvertex([[1, 2], [3, 4]]);
       (d)
       / \
     (e) (f)
-
+   ```
     Now, there are two outputs from (e) and (f) so to get an output from (e)
     
-    model.feedForword(e) gives the result of e
-    model.feedForword(f) gives the result of f
+    model.feedForword(e) gives the result of (e)
+    
+    model.feedForword(f) gives the result of (f)
 
     ```javascript
     /*
@@ -235,6 +240,7 @@ const a = new ndvertex([[1, 2], [3, 4]]);
 
     Before pass:
 
+   ```js
       (a)  (b)
        \   /
         (c)
@@ -242,7 +248,8 @@ const a = new ndvertex([[1, 2], [3, 4]]);
         (d)
         / \
       (e) (f)
-
+   ```
+   
     After pass:
     
         feedForword(e) - (e) vertex/layer flow from 
@@ -252,21 +259,23 @@ const a = new ndvertex([[1, 2], [3, 4]]);
         compute the values instead it returns output directly.
     
         (! - Output of the layer is remembered)
-
+   ```javascript
       (a)!  (b)!
-       \   /
+        \   /
         (c)!
          |
         (d)!
         / \
      (e)! (f)
-
+    ```
     next Pass:
 
     feedForword(f):
 
     (f) vertex/layer flow is not from the origin.
+    
     instead,
+    
     (d)! => (f)
 
     if it needed to flow again from origin then you have to 
