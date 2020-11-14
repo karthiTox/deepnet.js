@@ -1,5 +1,6 @@
-const { ops } = require('../core/ndfn/ndfn');
-const { genRan, apply_activation, add, matmul, transpose } = ops;
+// const { ops } = require('../core/ndfn/ndfn');
+// const { genRan, apply_activation, add, matmul, transpose } = ops;
+const { apply_activation, genRan, add, matmul, transpose } = require("../core/engine/_entry_engine")
 const act = require('../core/util/activation');
 
 module.exports = class dense{

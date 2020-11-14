@@ -1,5 +1,5 @@
-const { ops } = require('../core/ndfn/ndfn');
-const { genRan, genZero, apply_activation, add, multiply, matmul, transpose } = ops;
+const { genRan, genZero, apply_activation, add, multiply, matmul, transpose } = require("../core/engine/_entry_engine");
+
 const act = require('../core/util/activation');
 
 module.exports = class lstm{
@@ -20,7 +20,7 @@ module.exports = class lstm{
         let prev_state = genZero([1, this.neurons])
         let res = [];
 
-        for(let i = 0; i < input.length; i++){
+        for(let i = 0; i < input.length; i++){            
             const net_otp = []
             for(let n = 0; n < 4; n++){
                 const inner1 = matmul(input[i], transpose(this.weight))            
@@ -49,13 +49,14 @@ module.exports = class lstm{
                 act.tanhPrime
             )
 
-            prev_output = multiply(net_otp[3], m);            
+            prev_output = multiply(net_otp[3], m);                        
             res.push(prev_output);
         }
 
+        return res;
         if(this.return_seq)
             return res;
         else
-            prev_output;
+            return prev_output;
     }       
 }

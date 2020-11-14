@@ -1,3 +1,4 @@
+import { costfn } from '../../../../old/independent_networks/constructor';
 import { tensor } from '../tensor';
 
 // Transpose
@@ -72,21 +73,21 @@ export function transpose<arr>(a:tensor<arr>, dimension?:number[]):tensor<arr>{
 
 function _mat_mul_2d(a:number[], a_shape:number[], b:number[], b_shape:number[]):number[]{  
     let col_step:number = a_shape[a_shape.length - 1];
+    
     const dim:number[] = b_shape.map((a:number, i:number):number => i).reverse();
     let b_data:number[] = _transpose_main(
         b, dim, _cstep_change(b_shape, dim), _cstep_change(_cstep(b_shape), dim)
     );
-
     let bShape = _cstep_change(b_shape, dim);
+    
     let res:number[] = [];
-
 
     for (let r:number = 0; r < a.length / col_step; r++) {
         
-        for(let c:number = 0; c < bShape[bShape.length - 1]; c++){
+        for(let c:number = 0; c < b_shape[b_shape.length - 1]; c++){
             const a_m:number[] = a.slice(r * col_step, r * col_step + col_step);
             const b_m:number[] = b_data.slice(c * col_step, c * col_step + col_step);
-            
+                    
             res.push(
                 a_m.map((a:number, i:number):number => a * b_m[i]).reduce((a:number, b:number):number => a + b)
             );
@@ -106,7 +107,7 @@ function _split(a:number[], aShape:number[], b:number[], bShape:number[]):number
 
     const res:number[] = [];
 
-    for (let i = 0; i < b.length / tot_el_a; i++) {               
+    for (let i = 0; i < a.length / tot_el_a; i++) {                            
         _mat_mul_2d(
             a.slice(i * tot_el_a, i * tot_el_a + tot_el_a), a_shape,
             b.slice(i * tot_el_b, i * tot_el_b + tot_el_b), b_shape

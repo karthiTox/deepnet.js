@@ -1,18 +1,22 @@
-const { ops, objs } = require('../core/ndfn/ndfn');
-const { backpass, grad_zero, update_loss } = ops;
+// const { ops, objs } = require('../core/ndfn/ndfn');
+const { backpass, grad_zero, update_loss, detach, traversal } = require('../core/engine/graph');
+const { tensor } = require('../core/engine/tensor');
+const { vertex } = require('../core/engine/vertex');
 const dense = require('./dense.layer');
+
 const seqdense = require('./seqdense.layer');
 const rnn = require('./rnn.layer');
 const lstm = require('./lstm.layer');
-const { loss } = require('./loss.fn');
-const { detach } = require('../core/ndfn/ops/graph_ops');
+const { genZero } = require('../core/engine/_entry_engine');
+const { add, multiply, matmul, transpose, sub } = require('../core/engine/_entry_engine');
+// const { loss } = require('./loss.fn');
+// const { detach } = require('../core/ndfn/ops/graph_ops');
 
 class model{
     constructor(){
         this.layers = [
-            new lstm(1, 3),
-            new lstm(3, 1),
-            // new seqdense(3, 1)
+            new lstm(1, 3),            
+            new seqdense(3, 2)
         ];      
     }
 
@@ -27,17 +31,18 @@ class model{
         return res;
     }
 
-    backpropagation(output){        
+    backpropagation(output){ 
         for(let r = this.res.length-1; r >= 0; r--){            
-                const res = this.res[r];                
-                backpass(res, new objs.ndarray(res.val.map((v, i) => v - output[r]), res.shape));    
-                update_loss(res, 0.04);    
-                grad_zero(res)            
-            }
-            
+            const res = this.res[r]; 
+            res.grad_ = new tensor(res.tensor_.data.map((v, i) => v - output[i]), res.tensor_.shape);                        
+            backpass(res);                        
+        }
+        
         for(let r = this.res.length-1; r >= 0; r--){            
             const res = this.res[r];                            
-            detach(res)            
+            update_loss(res, 1);    
+            grad_zero(res);
+            // detach(res);
         }
         // console.log(this.res)
     }
@@ -45,36 +50,41 @@ class model{
 
 const mod = new model();
 
-for(let l = 0; l < 1000; l++){
+for(let i = 0; i < 100; i++){
     mod.feedForword( 
         [
-            new objs.ndvertex([1], [1, 1]),             
-            new objs.ndvertex([0], [1, 1]),
-        ] 
+            new vertex(new tensor([1], [1, 1])),            
+            new vertex(new tensor([0], [1, 1])),            
+        ]
     );
-    mod.backpropagation([0, 1]);
 
-    mod.feedForword( 
-        [
-            new objs.ndvertex([0], [1, 1]), 
-            new objs.ndvertex([0], [1, 1]),                        
-        ] 
-    );
-    mod.backpropagation([0, 0]);
+    mod.backpropagation([1, 1]);    
+
+    // mod.feedForword( 
+    //     [
+    //         new vertex(new tensor([0], [1, 1])),
+    //         new vertex(new tensor([0], [1, 1]))
+    //     ]
+    // );
+
+    // mod.backpropagation([[0, 0], [0, 0]]);
 }
 
-console.log(
-    mod.feedForword( 
-        [
-            new objs.ndvertex([1], [1, 1]), 
-            new objs.ndvertex([0], [1, 1]),            
-        ] 
-    ),
+const res = mod.feedForword( 
+    [
+        new vertex(new tensor([1], [1, 1])),        
+        new vertex(new tensor([0], [1, 1])),        
+    ]
+);
 
-    mod.feedForword( 
-        [
-            new objs.ndvertex([0], [1, 1]), 
-            new objs.ndvertex([0], [1, 1]),                        
-        ] 
-    ),
-)
+console.log("-----------res")
+res.forEach(t => t.tensor_.print())
+
+
+// mod.feedForword( 
+//     [
+//         new vertex(new tensor([0], [1, 1])),
+//         new vertex(new tensor([0], [1, 1]))
+//     ]
+// ).forEach(t => t.tensor_.print());
+
