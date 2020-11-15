@@ -1,4 +1,4 @@
-import * as ops_ts from './ops_ts/_ops_entry';
+import * as ops_ts from './cpu/_ops_entry';
 import { vertex } from './vertex';
 
 export function transpose<ar>(a:vertex<ar>, dim?:number[]){

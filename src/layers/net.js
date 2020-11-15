@@ -15,8 +15,7 @@ const { add, multiply, matmul, transpose, sub } = require('../core/engine/_entry
 class model{
     constructor(){
         this.layers = [
-            new lstm(1, 3),            
-            new seqdense(3, 2)
+            new rnn(1, 2),
         ];      
     }
 
@@ -50,7 +49,7 @@ class model{
 
 const mod = new model();
 
-for(let i = 0; i < 100; i++){
+for(let i = 0; i < 1; i++){
     mod.feedForword( 
         [
             new vertex(new tensor([1], [1, 1])),            

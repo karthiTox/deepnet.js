@@ -6,14 +6,14 @@ import babel from "rollup-plugin-babel";
 const extensions = ['.mjs', '.js', '.json', '.node', '.ts'];
 
 const config = {
-    input: 'src/layers/net.js',
-    external:[],
+    input: 'src/core/engine/gpu/_mat.ts',
+    external:['gpu.js'],
     output: {
       file: 'test.js',
-      format: 'umd',
+      format: 'cjs',
       name: 'deep_test',
       globals:{
-        debug:"debug"
+        "gpu.js":"gpu.js"
       },
     },
     plugins: [
@@ -30,6 +30,7 @@ const config = {
       babel({
         extensions,        
         include: ['src/**/*'],
+        exclude: ['node_modules/**/*']
       }),
     ],
   };

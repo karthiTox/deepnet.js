@@ -1,4 +1,4 @@
-import { sub } from "./ops_ts/_ops_entry";
+import { sub } from "./cpu/_ops_entry";
 import { tensor } from "./tensor";
 import { vertex } from "./vertex";
 

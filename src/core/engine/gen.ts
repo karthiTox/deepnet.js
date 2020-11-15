@@ -1,4 +1,4 @@
-import * as gen from "./ops_ts/gen";
+import * as gen from "./cpu/gen";
 import { vertex } from "./vertex";
 
 export function genRan(shape:number[]):vertex<any>{

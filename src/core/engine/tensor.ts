@@ -1,3 +1,5 @@
+import { types } from "@babel/core";
+
 export class tensor<m_arr>{
     public data:number[];
     public shape:number[];    
@@ -21,10 +23,10 @@ export class tensor<m_arr>{
     }
 
     private extract<arr>(array:arr){
-        if(Array.isArray(array)){
+        if(array instanceof Float32Array || array instanceof Array){            
             const elements:number[] = [];        
-            array.forEach((m:any) => {
-                this.extract(m).forEach((v:number) => {
+            array.forEach(m => {
+                this.extract(m).forEach(v => {
                     elements.push(v)
                 });
             })

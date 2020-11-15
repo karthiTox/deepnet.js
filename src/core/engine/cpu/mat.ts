@@ -1,4 +1,3 @@
-import { costfn } from '../../../../old/independent_networks/constructor';
 import { tensor } from '../tensor';
 
 // Transpose
