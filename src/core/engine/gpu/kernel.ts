@@ -7,10 +7,10 @@ interface _kernal {
     kernal:IKernelRunShortcut,
 }
 
-export class kernels{
-    private static kernels:_kernal[] = [];
-
-    static makekernal(name:string, fn:any, settings:IKernelSettings):IKernelRunShortcut{                
+export const kernel = {
+    kernels: <_kernal[]>[],
+    
+    makekernal: function(name:string, fn:any, settings:IKernelSettings):IKernelRunShortcut{                
         for (let k = 0; k < this.kernels.length; k++) {
             if(this.kernels[k])
                 if(this.kernels[k].name == name)
@@ -26,9 +26,9 @@ export class kernels{
 
         this.kernels.push(kernal);        
         return kernal.kernal;
-    }
+    },
 
-    static destroy(name:string, setting?:IKernelSettings){
+    destroy: function(name:string, setting?:IKernelSettings){
         this.kernels.forEach((k, i) => {
             if(k){
                 if(k.name == name){
@@ -45,9 +45,11 @@ export class kernels{
                 }
             }            
         })
-    }
 
-    static destroyAll(){        
+        this.kernels = this.kernels.filter(n => n);
+    },
+
+    destroyAll: function(){        
         this.kernels.forEach((k, i) => {
             k.kernal.destroy(true);
             delete this.kernels[i];

@@ -6,7 +6,7 @@ import babel from "rollup-plugin-babel";
 const extensions = ['.mjs', '.js', '.json', '.node', '.ts'];
 
 const config = {
-    input: 'src/core/engine/gpu/_mat.ts',
+    input: 'src/layers/net.js',
     external:['gpu.js'],
     output: {
       file: 'test.js',

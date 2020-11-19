@@ -1,6 +1,5 @@
-import { IKernelFunctionThis } from "gpu.js";
 import { tensor } from "../tensor";
-import { kernels } from "./kernel";
+import { kernel } from "./kernel";
 
 function _cstep(shape:number[]):number[]{   
     const res = [];
@@ -49,12 +48,12 @@ function _transpose_main(
 ){         
     const _step = _cstep_change(step, dimension);
     
-    const fn = kernels.makekernal(
+    const fn = kernel.makekernal(
         "transpose", 
         
-        function(this:IKernelFunctionThis, a:number[], shape:number[], shape_len:number, step:number[], _step:number[]){            
+        function(this:any, a:number[], shape:number[], step:number[], _step:number[]){            
             let res = 0; 
-            for(let sh = 0; sh < shape_len; sh++){
+            for(let sh = 0; sh < this.constants.shape_length; sh++){
                 let inter = shape[sh] * step[sh];
                 let inter2 = Math.floor( (this.thread.x % inter) / step[sh] );
                 res += inter2 * _step[sh]
@@ -63,10 +62,13 @@ function _transpose_main(
             return a[res];
         },{
             output:[shape.reduce((a, b) => a*b)],
+            constants: {
+                shape_length: shape.length
+            }
         }        
     )
     
-    let res = fn(a, shape, shape.length, step, _step) ;
+    let res = fn(a, shape, step, _step) ;
     
     return res;
 }
@@ -94,30 +96,67 @@ export function transpose<arr>(a:tensor<arr>, dimension?:number[]):tensor<arr>{
 
 // Matrix mul
 
-
 function _mat_mul_2d(a:number[], a_shape:number[], b:number[], b_shape:number[]):number[]{  
     let col_step:number = a_shape[a_shape.length - 1];
     
     const dim:number[] = b_shape.map((a:number, i:number):number => i).reverse();
-    let b_data:number[] = _transpose_main(
-        b, dim, _cstep_change(b_shape, dim), _cstep_change(_cstep(b_shape), dim)
-    );
-    let bShape = _cstep_change(b_shape, dim);
+    let b_data = _transpose_main(b, b_shape, _cstep(b_shape), dim);
     
-    let res:number[] = [];
+    const r = a.length / col_step;
+    const c = b_shape[b_shape.length - 1];
 
-    for (let r:number = 0; r < a.length / col_step; r++) {
+    let fn = kernel.makekernal(
+        "matmul2d", 
+        function (this:any, a:number[], b:number[]){
+            let start = this.thread.x * this.constants.col_len;        
+            let start2 = this.thread.y * this.constants.col_len; 
         
-        for(let c:number = 0; c < b_shape[b_shape.length - 1]; c++){
-            const a_m:number[] = a.slice(r * col_step, r * col_step + col_step);
-            const b_m:number[] = b_data.slice(c * col_step, c * col_step + col_step);
-                    
-            res.push(
-                a_m.map((a:number, i:number):number => a * b_m[i]).reduce((a:number, b:number):number => a + b)
-            );
-        }
+            let sum = 0;
+            for (let i = 0; i < this.constants.col_len; i++) {
+                sum += a[i + start] * b[i + start2];
+            }
+            return sum;
+        }, {
+            output:[r, c],
+            constants:{
+                col_len: col_step
+            }
+    })
 
+    const res:number[] = [];
+    let arr = fn(a, b_data) as number[][];
+    arr.forEach(r => {
+        r.forEach(c => res.push(c))
+    })
+
+    return res;
+}
+
+function _split(a:number[], aShape:number[], b:number[], bShape:number[]):number[]{
+    let a_shape:number[] = aShape.slice(aShape.length - 2);
+    let b_shape:number[] = bShape.slice(bShape.length - 2);
+
+    let tot_el_a:number = a_shape[0] * a_shape[1];
+    let tot_el_b:number = b_shape[0] * b_shape[1];
+
+    const res:number[] = [];
+
+    const i_len = a.length / tot_el_a;
+
+    for (let i = 0; i < a.length / tot_el_a; i++) {                            
+        _mat_mul_2d(
+            a.slice(i * tot_el_a, i * tot_el_a + tot_el_a), a_shape,
+            b.slice(i * tot_el_b, i * tot_el_b + tot_el_b), b_shape
+        ).forEach(v => res.push(v))                                      
     }
 
     return res;
+}
+
+export function matmul<arr>(a:tensor<arr>, b:tensor<arr>):tensor<arr>{
+    const res = _split(a.data, a.shape, b.data, b.shape)
+    const shape = Array.from(a.shape) 
+    shape[shape.length - 1] = b.shape[b.shape.length - 1];
+
+    return new tensor(res, shape);
 }

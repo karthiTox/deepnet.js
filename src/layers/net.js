@@ -9,13 +9,15 @@ const rnn = require('./rnn.layer');
 const lstm = require('./lstm.layer');
 const { genZero } = require('../core/engine/_entry_engine');
 const { add, multiply, matmul, transpose, sub } = require('../core/engine/_entry_engine');
+const { kernel } = require('../core/engine/gpu/kernel');
 // const { loss } = require('./loss.fn');
 // const { detach } = require('../core/ndfn/ops/graph_ops');
 
 class model{
     constructor(){
         this.layers = [
-            new rnn(1, 2),
+            new rnn(1000, 100),
+            new rnn(100, 2),
         ];      
     }
 
@@ -48,16 +50,16 @@ class model{
 }
 
 const mod = new model();
-
-for(let i = 0; i < 1; i++){
+const a = new Array(1000).fill(1)
+console.time("gpu")
+for(let i = 0; i < 10; i++){
     mod.feedForword( 
         [
-            new vertex(new tensor([1], [1, 1])),            
-            new vertex(new tensor([0], [1, 1])),            
+            new vertex(new tensor(a, [1, 1000])),                        
         ]
     );
 
-    mod.backpropagation([1, 1]);    
+    mod.backpropagation([1, 0]);    
 
     // mod.feedForword( 
     //     [
@@ -68,17 +70,9 @@ for(let i = 0; i < 1; i++){
 
     // mod.backpropagation([[0, 0], [0, 0]]);
 }
+console.timeEnd("gpu")
 
-const res = mod.feedForword( 
-    [
-        new vertex(new tensor([1], [1, 1])),        
-        new vertex(new tensor([0], [1, 1])),        
-    ]
-);
-
-console.log("-----------res")
-res.forEach(t => t.tensor_.print())
-
+kernel.destroyAll();
 
 // mod.feedForword( 
 //     [
@@ -86,4 +80,3 @@ res.forEach(t => t.tensor_.print())
 //         new vertex(new tensor([0], [1, 1]))
 //     ]
 // ).forEach(t => t.tensor_.print());
-
