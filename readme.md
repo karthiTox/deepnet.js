@@ -2,7 +2,7 @@
 
 <img src="logo.png" width="200" height="200" />
 
-deepnet is an auto-differentiation library for javascript. it will dynamically build a computational graph while doing math operations and compute gradients during the backward pass.
+deepnet.js is an auto-differentiation library for javascript. it will dynamically build a computational graph while doing the math operations and compute the gradients during the backward pass.
 
 ## Installation
 
@@ -24,7 +24,7 @@ https://unpkg.com/deepnet.js@1.0.2/dist/deepnet-browser.js
 ## Node
 
 ```js
-const dn = require("deepnet");
+const dn = require("deepnet.js");
 
 const a = dn.tensor([1, 2, 3, 4], [2, 2]);
 const b = dn.tensor([1, 2, 3, 4], [2, 2]);
@@ -51,7 +51,9 @@ result.print();
 
 ## Autograd
 
-Autograd (Automatic Differentitation) is a method which uses a computational graph to compute a derivatives automatically. In the forward phase, it executes the math operation and constructs the computational graph, and In the backward phase, the dervatives are computed automatically.
+Autograd (Automatic Differentitation) is a technique which uses a computational graph to compute a derivatives automatically. 
+
+In the forward phase, it executes the math operation and constructs the computational graph, and In the backward phase, the dervatives are computed automatically.
 
 ## tensor
 
@@ -62,13 +64,13 @@ const a = dn.tensor([1, 2, 3, 4], [2, 2]);
 ```
 
 __Contains:__
-* __data__ The values of the tensor. it array of numbers.
+* __data__ The values of the tensor. Array of numbers.
 
 * __shape__ The shape of the tensor. if it is not defined, it will be automatically found from data.
 
 ## Vertex
 
-A vertex is a point on the graph, it holds the tensor and grad (tensor) to calculate the derivatives of the tensor and it is used to construct a graph.
+A vertex is a point on the graph, it holds the tensor and grad (tensor) and it is used to calculate the derivatives of the tensor respectively.
 
 ```js
 const a = dn.vertex(dn.tensor([1, 2, 3, 4], [2, 2]));
@@ -77,13 +79,13 @@ const a = dn.vertex(dn.tensor([1, 2, 3, 4], [2, 2]));
 __Contains:__
  * __tensor__ Initial value for the tensor.
 
- * __grad__ derivative of the tensor, it will be filled while backpass.
+ * __grad__ Stores the derivation of the tensor, it will be filled while backpass().
 
- * __parents__ Parents of the resultant vertex, it will be filled when you do any tensor operations.
+ * __parents__ Stores the Parents (vertex[]), from which it is created.
 
- * __back__ Calculates derivatives, fills grad
+ * __back__ Calculates the derivation, it will fills the grad
 
- * __name__ Name of the vertex.
+ * __name__ Name of the vertex, Optional.
 
 ## Examples
  
@@ -155,21 +157,20 @@ __Backpass example__
 
 __dn.backpass()__
 
-dn.backpass() will Compute the gradient (derivatives) of the current vertex's tensor (tensor_) and 
-adds the results with grad (grad is initialized with value (0)).
+dn.backpass() will Compute the gradients (derivatives) of the current vertex's tensor (tensor_) and 
+adds the computed gradients with the grad (grad_ is initialized with value (0)).
 
-<<<<<<< HEAD
-grad must be zero before calling dn.backpass(). The graph which is constructed while the forword operation and then it is differentiated using chain rule. 
+grad must be zero before calling dn.backpass(). The graph which is constructed while the forword operation is differentiated using chain rule. 
 
 __dn.update_loss()__
 
-dn.update_loss() will update the vertex's tensor with grad (it simple subtracts vertex's tensor from vertex's grad).
+dn.update_loss() will update the vertex's tensor with vertex's grad (it with simple subtracts the vertex's tensor from vertex's grad).
 this should be called after backpass.
 
 
 __dn.grad_zero()__
 
-dn.grad_zero() will Reset the grad (it simple set grad to zero). 
+dn.grad_zero() will Reset the vertex's grad (it will simple set grad to zero). 
 this should be called after update_loss.
 
 __dn.detach()__
