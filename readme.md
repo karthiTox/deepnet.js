@@ -36,9 +36,10 @@ result.print();
 ## CDN
 
 ```html
-<script src="dist/deepnet.esm"></script>
+<script src="https://unpkg.com/deepnet.js@1.0.2/dist/deepnet-browser.js"></script>
 <script>
-    
+    let dn = deepnet;
+
     const a = dn.tensor([1, 2, 3, 4], [2, 2]);
     const b = dn.tensor([1, 2, 3, 4], [2, 2]);
 
