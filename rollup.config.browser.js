@@ -2,7 +2,6 @@ import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import babel from "rollup-plugin-babel";
 import {terser} from "rollup-plugin-terser";
-import * as pkg from './package.json';
 // import { wasm } from '@rollup/plugin-wasm';
 
 const extensions = ['.mjs', '.js', '.json', '.node', '.ts'];
@@ -12,29 +11,39 @@ const config = {
     input: 'src/core/engine/autograd.ts',    
     output: [
       {
-        file: pkg.main,
-        format: 'cjs',
+        file: 'dist/'+name+'-browser.mjs',
+        format: 'es',
         sourcemap: true,
       },
       {
-      file: pkg.module,
-      format: 'es',
-      sourcemap: true,
-    },
+        file: 'dist/'+name+'-browser.js',
+        format: 'umd',
+        name,
+        sourcemap: true,
+      },
+      {
+        file: 'dist/'+name+'-browser.min.js',
+        format: 'umd',
+        name,
+        sourcemap: true,
+        plugins: [          
+          terser(),
+        ],
+      }
     ],
     plugins: [
       
       resolve({
         preferBuiltins: true,        
-        browser:false,
+        browser:true,
         extensions,
-      }),,  
+      }), 
       
       commonjs(), 
       
       babel({
         extensions,        
-        include: ['src/**/*'],
+        include: ['src/**/*'],        
         exclude: ['node_modules/**/*']
       }),
     ],

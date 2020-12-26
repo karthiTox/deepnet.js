@@ -2,6 +2,7 @@ node_modules/
 old/
 src/
 test/
+examples/
 
 .babelrc
 .gitignore

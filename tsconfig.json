@@ -13,7 +13,7 @@
     // "noEmit": true,
     "noEmitOnError": true,
     "outDir": "./dist/",
-    "rootDir": "./src/core/engine",
+    "rootDir": "./",
     "skipLibCheck": true,
     "strict": true,
     "target": "es5"

@@ -4,8 +4,9 @@ import * as graphfn from "./graph";
 import { tensor } from "./tensor";
 import { vertex } from "./vertex";
 import * as genfn from "./cpu/gen";
+import { apply_activation } from "./apply_act";
 
-module.exports = {    
+export const deepnet = {    
     tensor:tensor,
     vertex:vertex,
 
@@ -14,6 +15,8 @@ module.exports = {
     zeros:genfn.zeros,
     fill:genfn.fill,
     fillfn:genfn.fillfn,
+
+    applyfn:apply_activation,
 
     add:add,
     sub:sub,
@@ -26,4 +29,18 @@ module.exports = {
     grad_zero:graphfn.grad_zero,
     traversal:graphfn.traversal,
     detach:graphfn.detach,
+}
+
+declare global {
+    interface Window {
+        deepnet: typeof deepnet;
+    }
+}
+  
+if (typeof window !== 'undefined') {
+    window.deepnet = deepnet;
+}
+  
+if (typeof module !== 'undefined') {
+    module.exports = deepnet;
 }

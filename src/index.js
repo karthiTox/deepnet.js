@@ -4,7 +4,7 @@ const _layerGrap = require('./layers/layer_graph/layer_graph')
 const _activation = require('./core/util/activation')
 const _merge_fn = require('./layers/merge.methods')
 
-module.exports = {
+export const deepnet = {
     ndfn: _ndfn,
 
     layers: layers,

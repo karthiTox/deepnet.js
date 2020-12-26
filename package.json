@@ -1,15 +1,17 @@
 {
-  "name": "deepnet",
-  "version": "1.0.0",
+  "name": "deepnet.js",
+  "version": "1.0.2",
   "description": "Auto-differentiation library for javascript",
-  "main": "dist/deepnet.cjs.js",
+  "main": "dist_node/deepnet.main.js",
+  "module": "dist_node/deepnet.mod.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
     "test": "jest",
-    "build": "rollup -c",
-    "build-ts-tensor": "tsc src/core/engine/tensor.test.ts"
+    "build:browser": "rollup -c rollup.config.browser.js",
+    "build:node": "rollup -c rollup.config.js" ,
+    "build":"npm run build:browser && npm run build:node"
   },
   "repository": {
     "type": "git",
