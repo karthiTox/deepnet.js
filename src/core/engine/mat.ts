@@ -1,56 +1,80 @@
-import * as ops_cpu from './cpu/_ops_entry';
-import * as ops_gpu from './gpu/_entry';
-import { settings } from './settings';
-import { vertex } from './vertex';
+import { isTensor, isVertex } from './checks';
+import * as ops from './cpu/_ops_entry';
+import { Tensor } from './tensor';
+import { Vertex } from "./Vertex";
 
-let ops = findOps();
-
-function findOps(){
-    switch(settings.mode){
-        case "cpu_js" : return ops_cpu
-        case "gpu": return ops_gpu
+/**
+ * Transposes the Tensor according to the dimension (dim).
+ * 
+ * this operation is a regular matrix transpose on Tensor.
+ * The input Tensor axis will be changed according to the input dimension (dim). 
+ *  
+ * @param a The input tensor
+ * @param dim the input dimension
+ * 
+ * @returns Tensor if inputs are Tensor, Vertex if inputs are Vertex 
+ * 
+ */
+export function transpose<arr>(a:Vertex<arr>|Tensor<arr>, dim?:number[]){
+    if(isVertex(a)){
+        const res_tensor = ops.transpose(a.tensor_, dim);
+        const res = new Vertex(res_tensor, [a]);
+    
+        res.back = () => {
+            a.grad_ = ops.add(
+                a.grad_,
+                ops.transpose(res.grad_, dim)
+            );
+        }
+    
+        return res;
+    }else if(isTensor(a)){
+        return ops.transpose(a, dim);   
+    }else{
+        throw new Error("inputs should be same type");
     }
 }
 
-export function transpose<ar>(a:vertex<ar>, dim?:number[]){
-    const res_tensor = ops.transpose(a.tensor_, dim);
-    const res = new vertex(res_tensor, [a]);
+/**
+ * Computes the matrix multiplication of two Tensors
+ * @param a The first Tensor to Matmul.
+ * @param b The Second Tensor to Matmul.
+ * 
+ * @returns Tensor if inputs are Tensor, Vertex if inputs are Vertex 
+ * 
+ */
+export function matmul<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>):Vertex<arr>|Tensor<arr>{   
+    if(isVertex(a) && isVertex(b)){
+        
+        const res_tensor = ops.matmul(a.tensor_, b.tensor_);
+        const res = new Vertex(res_tensor, [a, b]);
+    
+        res.back = () => {
+            a.grad_ = ops.add(
+                a.grad_,
+                
+                ops.matmul(
+                    res.grad_, ops.transpose(b.tensor_)
+                )
+    
+            );
+    
+            b.grad_ = ops.add(
+                b.grad_,
+             
+                ops.matmul(
+                    ops.transpose(a.tensor_), res.grad_
+                )
+    
+            );
+        }
 
-    res.back = () => {
-        a.grad_ = ops.add(
-            a.grad_,
-            ops.transpose(res.grad_, dim)
-        );
+        return res;
+
+    }else if(isTensor(a) && isTensor(b)){
+        return ops.matmul(a, b);      
+    }else{
+        throw new Error("inputs should be same type");
     }
-
-    return res;
-}
-
-
-export function matmul<ar>(a:vertex<ar>, b:vertex<ar>){
-    const res_tensor = ops.matmul(a.tensor_, b.tensor_);
-    const res = new vertex(res_tensor, [a, b]);
-
-    res.back = () => {
-        a.grad_ = ops.add(
-            a.grad_,
-            
-            ops.matmul(
-                res.grad_, ops.transpose(b.tensor_)
-            )
-
-        );
-
-        b.grad_ = ops.add(
-            b.grad_,
-         
-            ops.matmul(
-                ops.transpose(a.tensor_), res.grad_
-            )
-
-        );
-    }
-
-    return res;
 
 }

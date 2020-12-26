@@ -1,360 +1,109 @@
-# deepnet.js
+## Deepnet
 
-<img src="logo.png" width="200" height="200" />
+deepnet is an auto-differentiation library for javascript. it dynamically build a computation graph while doing operations and compute gradients during the backward pass.
 
-## What is this ?
-ndarray and dynamic neural network with javascript.
+## usage
 
-deepnet pakage provides:
-* ndarray computation with cpu using computational graph 
-* neural network implemented on top of the ndarray
-
-This pakage is not yet fully completed
-
-## What are the neural net layers this pakage have ?
-- [x] Dense
-- [x] RNN
-- [x] LSTM
-- [ ] CNN
-
-## Examples
-
-### Auto grad
-
-* Import the required pakages
-
-```javascript
-const deepnet = require('../src/index');
-const { ndarray, ndvertex } = deepnet.ndfn.objs;
-const ops = deepnet.ndfn.ops;
-```
-
-* ndarray:
-
-ndarray is used to do math operations over array currently this lib
-supports basic operation, matrix operation and manupuation but this 
-operations are not tracked while computation.
-
-```javascript
-const a = new ndarray(array, shape);
-
-const a = new ndarray([1, 2, 3, 4], [2, 2]);
-const a = new ndarray([[1, 2], [3, 4]]);
-```
-
-* ndvertex:
-
-ndvertex is used to do math operations and this 
-operations are tracked while computation using cgraph.
-
-```javascript
-const a = new ndvertex(array, shape);
-
-const a = new ndvertex([1, 2, 3, 4], [2, 2]);
-const a = new ndvertex([[1, 2], [3, 4]]);
-```
-
-* Operations
-
-    *  Import the required pakages 
-    
-    ```javascript
-    const {
-        add, sub, multiply, // basic ops 
-        expand_to, transpose, matmul, concat,// Matrix
-        traversal, backpass, update_loss, grad_zero, detach,
-        genRan, genZero,
-        apply_activation 
-    } = deepnet.ndfn.ops;
-    ```
-    
-    operations always returns ndvertex by default
-    if you want to returntype as ndarray specify the return type while call 
-
-     ```javascript
-    const a = new ndvertex([[1, 2], [3, 4]]);
-    const b = new ndvertex([[1, 2], [3, 4]]);
-    
-    add(a, b, 'ndarray'); // => returns ndarray
-    add(a, b); // => returns ndvertex
-
-    sub(a, b);
-    
-    multiply(a, b);
-    ```
-
-    Chain the operations together to do autograd
-
-     ```javascript
-    const a = new ndvertex([[1, 2]]);
-    const w = new ndvertex([[1, 2], [3, 4]]);
-    const b = new ndvertex([[1, 2], [3, 4]]);
-        
-    const tw = transpose(w);
-    const mul = matmul(a, tw);    
-    
-    const res = add(mul, b);
-    ```
-    After chaining the operation pass the result (ndvertex) to the backpass
-    
-    backpass(result, error) compute derivatives of every variable.
-    update_loss(res, alpha) updates the computed derivates of each ndvertex.
-    grad_zero(res) set grad to zero.
-    detach(res) removes the connection of the graph.
-
-     ```javascript
-    const a = new ndvertex([[1, 2]]);
-    const w = new ndvertex([[1, 2], [3, 4]]);
-    const b = new ndvertex([[1, 2], [3, 4]]);
-        
-    const tw = transpose(w);
-    const mul = matmul(a, tw);    
-    
-    const res = add(mul, b);
-
-    const init_value = new ndarray([[1, 1], [1, 1]]);    
-    backpass(res, err=init_value); 
-    update_loss(res, alpha=0.04);
-    grad_zero(res);
-    detach(res);
-    ```
-* Layer graph building procedure
-    Model is build using static layer graph which holds layers
-        
-        Dense  Dense
-           \    /
-           Dense
-
-    * How it create ? 
-    
-    initialize a graph:    
-    
-    ```javascript
-    const LayerGraph = deepnet.models.LayerGraph;
-    const model = new LayerGraph();
-    ```
-    Graph is created on fly using add method 
-
-    ```javascript
-    // const a = model.add(layer, parents, merge_function, Name_of_the_layer)
-    const a = model.add(new dense(1, 2), null, null, "a");
-    const b = model.add(new dense(1, 2), null, null, "b");
-    const c = model.add(new dense(4, 1), [a, b], deepnet.mergefn.concat, "c");    
-    
-    //  a  b 
-    //  \ /
-    //   c
-    ```
-    
-    ```javascript
-    model.feedForword(c,{
-        'a':[new ndvertex([[1]], [1, 1]), new ndvertex([[0]], [1, 1])],    
-        'b':[new ndvertex([[1]], [1, 1]), new ndvertex([[0]], [1, 1])],    
-    })    
-    model.backpropagation([[0], [1]]);
-    model.reset(c);
-    ```
-
-    * Creation flow
-
-    ```javascript
-    const a = model.add(new lstm(1, 2), null, null, "a");
-    ```
-    (a)
-
-    
-    ```javascript
-    const b = model.add(new lstm(1, 2), null, null, "a");
-    ```
-    (a)  (b)
-
-    ```javascript
-    // merging two sequence input or two non-seq input is applicable
-    // can't merge seq and non-seq input   
-    const c = model.add(new lstm(2, 1), [a, b], deepnet.mergefn.add, "c"); 
-    ```
-    (a)  (b)
-     \   /
-      (c)
-
-    
-    ```javascript
-    const d = model.add(new lstm(2, 1), [c], null, "c");        
-    ```
-    (a)  (b)
-     \   /
-      (c)
-       |
-      (d)
-
-    
-    ```javascript  
-    const e = model.add(new lstm(2, 1), [d], null, "c");    
-    const f = model.add(new lstm(2, 1), [d], null, "c");    
-    ```
-    (a)  (b)
-     \   /
-      (c)
-       |
-      (d)
-      / \
-    (e) (f)
-
-    Now, there are two outputs from (e) and (f) so to get an output from (e)
-    
-    model.feedForword(e) gives the result of e
-    model.feedForword(f) gives the result of f
-
-    ```javascript
-    /*
-    model.feedForword(final_pointer, inputs);
-
-    model.feedForword(final_pointer, inputs{
-        name_of_input_vertex_1: input_1,    
-        name_of_input_vertex_2: input_2,    
-    })
-    */
-
-    model.feedForword(e,{
-        'a':[ new ndvertex([[1]]), new ndvertex([[0]]) ], // for lstm and rnn  
-        'b':[ new ndvertex([[1]]), new ndvertex([[0]]) ], // for lstm and rnn          
-    })
-    ```
-
-    ```javascript
-    // currently raw array is need to pass
-    // next build will change this method
-    model.backpropagation([
-        [0], // t1 
-        [1]  // t2
-    ]);
-    ```
-
-    * Rest()
-    it will reset output of every layer in the model. 
-
-    Before pass:
-
-      (a)  (b)
-       \   /
-        (c)
-         |
-        (d)
-        / \
-      (e) (f)
-
-    After pass:
-    
-        feedForword(e) - (e) vertex/layer flow from 
-        (a)(b) => (c) => (d) => (e)
-    
-        every vertex remmembers the output so when you feedforword next time it did not 
-        compute the values instead it returns output directly.
-    
-        (! - Output of the layer is remembered)
-
-      (a)!  (b)!
-       \   /
-        (c)!
-         |
-        (d)!
-        / \
-     (e)! (f)
-
-    next Pass:
-
-    feedForword(f):
-
-    (f) vertex/layer flow is not from the origin.
-    instead,
-    (d)! => (f)
-
-    if it needed to flow again from origin then you have to 
-    reset() before calling feedForword
-
-    ```javascript
-    model.feedForword(e,{
-        'a':[ new ndvertex([[1]]), new ndvertex([[0]]) ], // for lstm and rnn  
-        'b':[ new ndvertex([[1]]), new ndvertex([[0]]) ], // for lstm and rnn          
-    })
-
-    // (a)!  (b)!
-    //   \   /
-    //    (c)!
-    //     |
-    //    (d)!
-    //    / \
-    // (e)! (f)
-
-    reset(e) // <===========
-
-    // (a)   (b)
-    //   \   /
-    //    (c)
-    //     |
-    //    (d)
-    //    / \
-    // (e)  (f)
-
-    model.feedForword(f,{
-        'a':[ new ndvertex([[1]]), new ndvertex([[0]]) ], // for lstm and rnn  
-        'b':[ new ndvertex([[1]]), new ndvertex([[0]]) ], // for lstm and rnn          
-    })
-
-    // (a)!  (b)!
-    //   \   /
-    //    (c)!
-    //     |
-    //    (d)!
-    //    / \
-    // (e)  (f)!
-    ```
-
-
-* LSTM NETWORK EXAMPLE
+## Node
 
 ```js
-const deepnet = require('../src/index');
-const { ndarray, ndvertex } = deepnet.ndfn.objs;
-const { lstm, rnn, dense, seqdense } = deepnet.layers;
-const mergefn = deepnet.mergefn;
+const dn = require("deepnet");
 
-const LayerGraph = deepnet.models.LayerGraph;
-const model = new LayerGraph();
+const a = dn.tensor([1, 2, 3, 4], [2, 2]);
+const b = dn.tensor([1, 2, 3, 4], [2, 2]);
 
-const a = model.add(new lstm(1, 2), null, null, "a");
-const b = model.add(new lstm(1, 2), null, null, "b");
-const c = model.add(new lstm(4, 1), [a, b], mergefn.concat, "c");
-
-// not used but connected
-const d = model.add(new seqdense(2, 1), [a, b], null, "d");
-
-// Training
-for(let i = 0; i < 1000; i++){
-    model.feedForword(c,{
-        'a':[new ndvertex([[1]], [1, 1]), new ndvertex([[0]], [1, 1])],    
-        'b':[new ndvertex([[1]], [1, 1]), new ndvertex([[0]], [1, 1])],    
-    })    
-    model.backpropagation([[0], [1]]);
-    model.reset(c);
-
-    model.feedForword(c,{
-        'a':[new ndvertex([[0]], [1, 1]), new ndvertex([[0]], [1, 1])],    
-        'b':[new ndvertex([[0]], [1, 1]), new ndvertex([[0]], [1, 1])],    
-    })    
-    model.backpropagation([[0], [0]])
-    model.reset(c)    
-}
-
-// Pridicting
-model.feedForword(c,{
-    'a':[new ndvertex([[1]], [1, 1]), new ndvertex([[0]], [1, 1])],    
-    'b':[new ndvertex([[1]], [1, 1]), new ndvertex([[0]], [1, 1])],    
-}).forEach(v => v.print());
-model.reset(c)    
-
-model.feedForword(c,{
-    'a':[new ndvertex([[0]], [1, 1]), new ndvertex([[0]], [1, 1])],    
-    'b':[new ndvertex([[0]], [1, 1]), new ndvertex([[0]], [1, 1])],    
-}).forEach(v => v.print());
+const result = dn.matmul( a, b );
+result.print();
 ```
+
+## CDN
+
+```html
+<script src="dist/deepnet.esm"></script>
+<script>
+    
+    const a = dn.tensor([1, 2, 3, 4], [2, 2]);
+    const b = dn.tensor([1, 2, 3, 4], [2, 2]);
+
+    const result = dn.matmul( a, b );
+    result.print();
+
+</script>
+```
+
+## Installation
+
+## NPM
+```bash
+npm install deepnet
+```
+
+## CDN
+```CDN
+links
+```
+
+## Autograd
+
+Autograd (Automatic Differentitation) is a method which uses a computational graph to compute a derivatives automatically. In the forward phase, the operations it executed and computational graph is constructed, and in the backward phase, the dervatives are computed automatically.
+
+## tensor
+
+A tensor is a scalar or a vector or a multidimensional array. it can be created using dn.tensor()
+
+```js
+const a = dn.tensor([1, 2, 3, 4], [2, 2]);
+```
+
+Contains:
+* __data__ The values of the tensor. it array of numbers.
+    
+* __shape__ The shape of the tensor. if it is not defined, it will be automatically found from data.
+
+## Vertex
+
+A vertex is a point on the graph, it holds the tensor and grad (tensor) to calculate the derivatives of the tensor.
+
+```js
+const a = dn.vertex(dn.tensor([1, 2, 3, 4], [2, 2]));
+```
+
+Contains:
+ * __tensor__ Initial value for the tensor.
+ * __gad__ Derivatives of this resultant tensor, it will be filled while backpass
+ * __parents__ Parents of the resultant vertex, it will be filled when you use the tensor operations.
+ * __back__ Calculates derivatives
+ * __name__ Name of the vertex.
+
+## Examples
+ 
+Create a tensor
+
+```js
+const a = dn.ones([2, 2]);
+a.print()
+```
+
+Output:
+```
+Tensor
+[[1 1]
+ [1 1]]
+```
+
+Adding two tensor
+
+```js
+const a = dn.ones([2, 2]);
+const b = dn.ones([2, 2]);
+const result = dn.add(a, b);
+result.print();
+```
+
+Output:
+```
+Tensor
+[[2 2]
+ [2 2]]
+```
+

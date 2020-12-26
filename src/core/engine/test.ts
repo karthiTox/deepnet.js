@@ -1,16 +1,15 @@
-import { backpass, traversal } from "./graph";
-import { tensor } from "./tensor";
-import { vertex } from "./vertex";
+import * as dn from "./autograd";
+import { Vertex } from "./vertex";
 
-import { add, transpose, multiply, sub, matmul } from "./_entry_engine";
-const t1 = new tensor(1);
-const t2 = new tensor(2);
 
-const a = new vertex(t1);
-const b = new vertex(t2);
 
-const res = matmul(a, b);
-res.grad_ = new tensor(res.tensor_.data.map((v, i) => 15), res.tensor_.shape)
+// dn.transpose(a).print();
+// dn.tra(a, b).print();
+// dn.add(a, b).print();
 
-backpass(res);
-traversal(res);
+
+
+// res.grad_ = dn.tensor(res.tensor_.data.map((v, i) => 15), res.tensor_.shape)
+
+// dn.backpass(res);
+// dn.traversal(res);

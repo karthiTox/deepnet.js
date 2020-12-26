@@ -1,4 +1,5 @@
-import { tensor } from '../tensor';
+import { Tensor } from '../Tensor';
+import { multiply } from './basic';
 
 // Transpose
 
@@ -50,7 +51,7 @@ function _transpose_main(
     return arr
 }
 
-export function transpose<arr>(a:tensor<arr>, dimension?:number[]):tensor<arr>{
+export function transpose<arr>(a:Tensor<arr>, dimension?:number[]):Tensor<arr>{
     const dim:number[] = dimension
     ? dimension.length != 0 
         ? dimension 
@@ -65,7 +66,7 @@ export function transpose<arr>(a:tensor<arr>, dimension?:number[]):tensor<arr>{
     );
     const shape = _cstep_change(a.shape, dim);
 
-    return new tensor(res, shape);
+    return new Tensor(res, shape);
 }
 
 // Mat mul
@@ -116,10 +117,28 @@ function _split(a:number[], aShape:number[], b:number[], bShape:number[]):number
     return res;
 }
 
-export function matmul<arr>(a:tensor<arr>, b:tensor<arr>):tensor<arr>{
+export function matmul<arr>(a:Tensor<arr>, b:Tensor<arr>):Tensor<arr>{
+    
+    if(a.shape.length > 1 && b.shape.length > 1){
+        if(a.shape[a.shape.length - 1] != b.shape[a.shape.length - 2]) 
+            throw new Error("number of columns in first tensor should equal to number of rows in second tensor")
+    
+        if(a.shape.length > 2){
+            for (let s = 0; s < a.shape.length-2; s++) {        
+                if(a.shape[s] != b.shape[s])
+                    throw new Error("two tensor are not equal")
+            }
+        }
+    
+    }else{
+        return multiply(a, b)
+    }
+
+    
+
     const res = _split(a.data, a.shape, b.data, b.shape)
     const shape = Array.from(a.shape) 
     shape[shape.length - 1] = b.shape[b.shape.length - 1];
 
-    return new tensor(res, shape);
+    return new Tensor(res, shape);
 }

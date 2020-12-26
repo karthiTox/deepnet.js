@@ -8,3 +8,4 @@ src/blocks/tests/n-array/test.py
 
 node_modules/
 dist/
+dist_ts/

@@ -1,12 +1,16 @@
 import { types } from "@babel/core";
 
-export class tensor<m_arr>{
+export class Tensor<m_arr>{
     public data:number[];
     public shape:number[];    
 
     constructor(array:m_arr, shape?:number[]){
-        this.data = this.extract(array) as number[];
-        this.shape = shape ? Array.from(shape) : this.findshape(array);                  
+        this.data = this.extract(array);
+        this.shape = shape ? Array.from(shape) : this.findshape(array);
+        
+        if(this.data.length != (this.shape.length == 0 ? 1 :this.shape.reduce((a, b)=>a*b))){
+            throw new Error("given shape is wrong")
+        }
     }
 
     private findshape<arr>(array:arr):number[]{    
@@ -22,17 +26,20 @@ export class tensor<m_arr>{
         }
     }
 
-    private extract<arr>(array:arr){
-        if(array instanceof Float32Array || array instanceof Array){            
-            const elements:number[] = [];        
-            array.forEach(m => {
-                this.extract(m).forEach(v => {
-                    elements.push(v)
+    private extract(array:any):number[]{
+        if(typeof(array) != "number"){
+            let res:any[] = [];
+            
+            for (let a = 0; a < array.length; a++) {
+                let el = array[a];
+                this.extract(el).forEach(e => {
+                    res.push(e);
                 });
-            })
-            return elements;
-        }else{        
-            return [array]
+            }
+
+            return res;
+        }else{
+            return [array];
         }
     }
 
@@ -88,4 +95,13 @@ export class tensor<m_arr>{
         console.log(' ');
         return true;
     }
+}
+
+/**
+ * Creates a Tensor with the provided values and shape.
+ * @param values The values of the tensor. it can be n-dimensional array of numbers, or a TypedArray. 
+ * @param shape The shape of the tensor. if it is not defined, it will be automatically found from values.
+ */
+export function tensor<m_arr>(values:m_arr, shape?:number[]){
+    return new Tensor(values, shape)
 }
