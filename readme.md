@@ -158,6 +158,7 @@ __dn.backpass()__
 dn.backpass() will Compute the gradient (derivatives) of the current vertex's tensor (tensor_) and 
 adds the results with grad (grad is initialized with value (0)).
 
+<<<<<<< HEAD
 grad must be zero before calling dn.backpass(). The graph which is constructed while the forword operation and then it is differentiated using chain rule. 
 
 __dn.update_loss()__
@@ -252,8 +253,7 @@ let b = dn.vertex(dn.rand([1, 5]));
 
 for (let iteration = 0; iteration < 1000; iteration++) {
     
-    let a = dn.vertex(dn.ones([1, 2]));
-    
+    let a = dn.vertex(dn.ones([1, 2]));  
     let result = fully_connected(a, w, b);
     let output = dn.tensor([0, 1, 0, 1, 0], [1, 5]);
     
@@ -273,4 +273,3 @@ Output:
 Tensor
 [[0.08015744142447224 0.9287171535850516 0.07756408786218669 0.9350647521435035 0.07852084424767934]]
 ```
-
