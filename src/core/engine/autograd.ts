@@ -1,34 +1,27 @@
-import { add, multiply, sub } from "./basic";
-import { matmul, transpose } from "./mat";
-import * as graphfn from "./graph";
-import { tensor } from "./tensor";
-import { vertex } from "./vertex";
-import * as genfn from "./cpu/gen";
-import { apply_activation } from "./apply_act";
+import * as engine from "./_entry_engine";
+import * as gen from "./cpu/gen";
 
 export const deepnet = {    
-    tensor:tensor,
-    vertex:vertex,
+    tensor:engine.tensor,
+    vertex:engine.vertex,
 
-    rand:genfn.rand,
-    ones:genfn.ones,
-    zeros:genfn.zeros,
-    fill:genfn.fill,
-    fillfn:genfn.fillfn,
+    generate:gen,
 
-    applyfn:apply_activation,
+    applyfn:engine.applyfn,
 
-    add:add,
-    sub:sub,
-    multiply:multiply,
-    matmul:matmul,
-    transpose:transpose,
+    add:engine.add,
+    sub:engine.sub,
+    multiply:engine.multiply,
+    divide:engine.divide,
     
-    backpass:graphfn.backpass,
-    update_loss:graphfn.update_loss,
-    grad_zero:graphfn.grad_zero,
-    traversal:graphfn.traversal,
-    detach:graphfn.detach,
+    matmul:engine.matmul,
+    transpose:engine.transpose,
+    
+    backpass:engine.backpass,
+    update_loss:engine.update_loss,
+    grad_zero:engine.grad_zero,
+    traversal:engine.traversal,
+    detach:engine.detach,
 }
 
 declare global {

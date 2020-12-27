@@ -78,3 +78,28 @@ export function matmul<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>
     }
 
 }
+
+export function concat<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>, axis:number):Vertex<arr>|Tensor<arr>{   
+    if(isVertex(a) && isVertex(b)){
+        
+        const res_tensor = ops.concat(a.tensor_, b.tensor_, axis);
+        const res = new Vertex(res_tensor, [a, b]);
+    
+        res.back = () => {
+            const rato = a.tensor_.shape[axis] / (a.tensor_.shape[axis] + b.tensor_.shape[axis]);
+            const [a_res_grad, b_res_grad] = ops.disjoin(res.grad_, axis, rato);            
+
+            
+            a.grad_ = ops.add(a.grad_, a_res_grad);
+            b.grad_ = ops.add(b.grad_, b_res_grad);
+        }
+
+        return res;
+
+    }else if(isTensor(a) && isTensor(b)){
+        return ops.concat(a, b, axis);      
+    }else{
+        throw new Error("inputs should be same type");
+    }
+
+}

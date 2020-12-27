@@ -142,3 +142,55 @@ export function matmul<arr>(a:Tensor<arr>, b:Tensor<arr>):Tensor<arr>{
 
     return new Tensor(res, shape);
 }
+
+export function concat<arr>(a:Tensor<arr>, b:Tensor<arr>, axis:number):Tensor<arr>{
+    const _a = _split_till(a.data, a.shape, axis);
+    const _b = _split_till(b.data, b.shape, axis);
+
+    const res = [];
+
+    for(let _sa = 0; _sa < _a.length; _sa++){
+        res.push(_a[_sa]);
+        res.push(_b[_sa]);
+    }
+
+    const shape = Array.from(a.shape);
+    shape[axis] += b.shape[axis];
+
+    
+    return new Tensor(res, shape);
+}
+
+export function disjoin<arr>(a:Tensor<arr>, axis:number, ratio:number):Tensor<arr>[]{
+    const _a = _split_till(a.data, a.shape, axis);
+
+    const res1 = [];
+    const res2 = [];
+    
+    for(let _sa = 0; _sa < _a.length; _sa++){
+        const middle = _a[_sa].length * ratio
+        res1.push(_a[_sa].slice(0, middle));        
+        res2.push(_a[_sa].slice(middle));        
+    }
+
+    const shape1 = Array.from(a.shape);
+    const shape2 = Array.from(a.shape);
+    shape1[axis] *= ratio;
+    shape2[axis] = shape2[axis] - (shape2[axis] * ratio);
+
+    return [new Tensor(res1, shape1), new Tensor(res2, shape2)];
+}
+
+function _split_till(val:number[], shape:number[], axis:number){
+    let a_shape = shape.slice(axis);
+
+    let tot_el = a_shape.reduce((a, b) => a * b);
+
+    const res = [];
+    for (let i = 0; i < val.length / tot_el; i++) {           
+        res.push(
+            val.slice(i * tot_el, i * tot_el + tot_el)
+        )                                
+    }
+    return res;
+}

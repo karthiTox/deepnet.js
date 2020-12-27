@@ -2,6 +2,8 @@ import * as ops from './cpu/_ops_entry';
 import {Vertex} from "./Vertex";
 import {Tensor, tensor} from "./tensor";
 import { isTensor, isVertex } from './checks';
+import { applyfn } from "./apply_act";
+import { recp } from './arithmetic';
 
 /**
  * Adds two Tensors or Vertex.
@@ -84,6 +86,17 @@ export function multiply<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<ar
         return res;
     }else if(isTensor(a) && isTensor(b)){
         return ops.multiply(a, b);        
+    }else{
+        throw new Error("inputs should be same type");
+    }
+}
+
+
+export function divide<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>):Vertex<arr>|Tensor<arr>{  
+    if(isVertex(a) && isVertex(b)){
+        return multiply(a, recp(b));
+    }else if(isTensor(a) && isTensor(b)){
+        return ops.multiply(a, ops.applyfn(b, (z:number)=>1/z));        
     }else{
         throw new Error("inputs should be same type");
     }

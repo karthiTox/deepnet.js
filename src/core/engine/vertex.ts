@@ -3,10 +3,10 @@ import { Tensor } from "./Tensor";
 export class Vertex<a>{
     constructor(
         public tensor_:Tensor<a>, 
-        public parents_?:Vertex<a>[],
+        public parents_:Vertex<a>[] = [],
         public grad_:Tensor<a> = new Tensor(tensor_.data.map((v:number) => 0), tensor_.shape),
-        public name?:string,
-    ){
+        public name:string = "",
+    ){ 
 
     }
     

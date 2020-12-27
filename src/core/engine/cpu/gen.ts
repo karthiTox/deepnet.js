@@ -1,4 +1,5 @@
 import { Tensor } from "../Tensor";
+import { avb_rand, getRand } from "./random";
 
 /**
  * Creates a Tensor with random elements (it uses Math.random() to generate random values).
@@ -6,11 +7,11 @@ import { Tensor } from "../Tensor";
  * 
  * @returns Tensor.
  */
-export function rand(shape:number[]){
+export function rand(shape:number[], type?:avb_rand){
     const size = shape.reduce((a, b) => a*b);
     const res = []
     for (let s = 0; s < size; s++) {
-        res.push(Math.random());
+        res.push(getRand(type));
     }
     
     return new Tensor(res, shape);    

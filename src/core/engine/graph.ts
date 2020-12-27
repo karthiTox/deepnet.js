@@ -94,12 +94,13 @@ export function detach<a>(res:Vertex<a>){
  * @param res Resultant vertex or Starting vertex.
  * @param key key to print, "tensor_" | "grad_"
  */
-export function traversal<a>(res:Vertex<a>, key:"tensor_"|"grad_" = "tensor_"){
+export function traversal<a>(res:Vertex<a>, key:"tensor_"|"grad_"|"fully" = "tensor_"){
     if(!isVertex(res)) throw new Error("traversal will only works with vertex");
 
     if(!res.parents_)
         if(res.name) console.log(res.name)
-        res[key].print();
+        if(key != "fully") res[key].print();
+        if(key == "fully") console.log(res)
     if(res.parents_){
         res.parents_.forEach((p) => {
             traversal(p, key);
