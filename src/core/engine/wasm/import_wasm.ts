@@ -1,4 +1,4 @@
-import Module from '../wasm-build/test';
+import Module from './wasm-build/test';
 export let module = Module;
 
 // export let waiting = Module();

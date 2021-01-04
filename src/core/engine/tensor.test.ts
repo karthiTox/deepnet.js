@@ -1,7 +1,7 @@
 import * as dn from "./engine_entry";
 import { Tensor, TensorView } from "./tensor";
 import { Vertex, VertexView } from "./vertex";
-import Module from "./wasm-build/test";
+import Module from "./wasm/wasm-build/test";
 import { Module_Functions } from "./wasm/Emscripton";
 import { get_ops, ops } from "./wasm/ops";
 import * as tensor_ops from "./wasm/tensor_ops/tensor_ops_entry";

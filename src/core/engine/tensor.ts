@@ -201,3 +201,7 @@ export class TensorView<m_arr> implements Tensor_interface{
         wasm.ops.destroy_tensor(this.Memory_address);
     };
 }
+
+
+
+export type Tensor_types<arr> = Tensor<arr> | TensorView<arr>;
