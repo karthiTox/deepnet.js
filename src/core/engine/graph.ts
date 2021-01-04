@@ -1,5 +1,5 @@
 import { isVertex } from "./checks";
-import { sub } from "./cpu/_ops_entry";
+import { sub } from "./cpu/tensor_ops/tensor_ops_entry";
 import { Tensor } from "./tensor";
 import { Vertex } from "./Vertex";
 

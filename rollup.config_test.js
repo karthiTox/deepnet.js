@@ -4,23 +4,20 @@ import babel from "rollup-plugin-babel";
 import {terser} from "rollup-plugin-terser";
 import * as pkg from './package.json';
 import { wasm } from '@rollup/plugin-wasm';
+import { copyto } from "./rollup-plugin-copy-to";
 
 const extensions = ['.mjs', '.js', '.json', '.node', '.ts'];
 const name = 'deepnet';
 
+let entry = 'src/core/engine/tensor.test.ts'
+
 const config = {
-    input: 'src/core/engine/autograd.ts',    
+    input: entry,    
     output: [
       {
-        file: pkg.main,
+        file: "./dist_test/test.js",
         format: 'cjs',
-        sourcemap: true,
-      },
-      {
-      file: pkg.module,
-      format: 'es',
-      sourcemap: true,
-    },
+      }
     ],
     plugins: [
       wasm(),
@@ -38,6 +35,8 @@ const config = {
         include: ['src/**/*'],
         exclude: ['node_modules/**/*']
       }),
+
+      copyto("./src/core/engine/wasm/wasm-build/test.wasm", "./dist_test/")
     ],
   };
   

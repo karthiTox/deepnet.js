@@ -1,4 +1,4 @@
-import * as autograd from "../core/engine/_entry_engine";
+import * as autograd from "../core/engine/engine_entry";
 
 interface Dense_options{
     prev_neurons:number, 

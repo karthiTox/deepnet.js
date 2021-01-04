@@ -1,4 +1,4 @@
-const { genRan, genZero, apply_activation, add, multiply, matmul, transpose } = require("../core/engine/_entry_engine");
+const { genRan, genZero, apply_activation, add, multiply, matmul, transpose } = require("../core/engine/engine_entry");
 
 const act = require('../core/util/activation');
 

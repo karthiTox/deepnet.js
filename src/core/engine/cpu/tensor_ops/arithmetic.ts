@@ -1,5 +1,5 @@
-import { check_shape } from '../checks';
-import { Tensor } from '../Tensor';
+import { check_shape } from '../../checks';
+import { Tensor } from '../../Tensor';
 
 export function max<arr>(a:Tensor<arr>, b:Tensor<arr>):Tensor<arr>{    
     check_shape(a, b);

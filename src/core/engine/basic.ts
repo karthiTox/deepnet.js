@@ -1,8 +1,10 @@
-import * as ops from './cpu/_ops_entry';
+import * as tensor_ops from './cpu/tensor_ops/tensor_ops_entry';
+import * as vertex_ops from './cpu/vertex_ops/vertex_ops_entry';
+
 import {Vertex} from "./Vertex";
 import {Tensor, tensor} from "./tensor";
 import { isTensor, isVertex } from './checks';
-import { applyfn } from "./apply_act";
+import { applyfn } from "./apply_fn";
 import { recp } from './arithmetic';
 
 /**
@@ -14,17 +16,9 @@ import { recp } from './arithmetic';
  */
 export function add<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>):Vertex<arr>|Tensor<arr>{    
     if(isVertex(a) && isVertex(b)){
-        const res_tensor = ops.add(a.tensor_, b.tensor_);
-        const res = new Vertex(res_tensor, [a, b]);
-    
-        res.back = ():void => {
-            a.grad_ = ops.add(a.grad_, res.grad_);
-            b.grad_ = ops.add(b.grad_, res.grad_);        
-        }
-    
-        return res;
+        return vertex_ops.add(a, b);
     }else if(isTensor(a) && isTensor(b)){
-        return ops.add(a, b);        
+        return tensor_ops.add(a, b);        
     }else{
         throw new Error("inputs should be same type");
     }
@@ -39,22 +33,9 @@ export function add<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>):V
  */
 export function sub<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>):Vertex<arr>|Tensor<arr>{  
     if(isVertex(a) && isVertex(b)){
-        const res_tensor = ops.sub(a.tensor_, b.tensor_);
-        const res = new Vertex(res_tensor, [a, b]);
-    
-        res.back = ():void => {
-            a.grad_ = ops.add(a.grad_, res.grad_);        
-            
-            const res_grad_new = tensor(
-                res.grad_.data.map((v:number) => v * -1),
-                res.grad_.shape
-            )
-            b.grad_ = ops.add(b.grad_, res_grad_new);                
-        }
-    
-        return res;
+        return vertex_ops.sub(a, b);        
     }else if(isTensor(a) && isTensor(b)){
-        return ops.sub(a, b);        
+        return tensor_ops.sub(a, b);        
     }else{
         throw new Error("inputs should be same type");
     }
@@ -69,23 +50,9 @@ export function sub<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>):V
  */
 export function multiply<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>):Vertex<arr>|Tensor<arr>{  
     if(isVertex(a) && isVertex(b)){
-        const res_tensor = ops.multiply(a.tensor_, b.tensor_);
-        const res = new Vertex(res_tensor, [a, b]);
-    
-        res.back = ():void => {
-            a.grad_ = ops.add(
-                a.grad_,
-                ops.multiply(res.grad_, b.tensor_)
-            );
-            b.grad_ = ops.add(
-                b.grad_,
-                ops.multiply(res.grad_, a.tensor_)
-            );
-        }
-    
-        return res;
+        return vertex_ops.multiply(a, b);        
     }else if(isTensor(a) && isTensor(b)){
-        return ops.multiply(a, b);        
+        return tensor_ops.multiply(a, b);        
     }else{
         throw new Error("inputs should be same type");
     }
@@ -94,9 +61,9 @@ export function multiply<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<ar
 
 export function divide<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>):Vertex<arr>|Tensor<arr>{  
     if(isVertex(a) && isVertex(b)){
-        return multiply(a, recp(b));
+        return vertex_ops.multiply(a, vertex_ops.recp(b));        
     }else if(isTensor(a) && isTensor(b)){
-        return ops.multiply(a, ops.applyfn(b, (z:number)=>1/z));        
+        return tensor_ops.multiply(a, tensor_ops.applyfn(b, (z:number)=>1/z));        
     }else{
         throw new Error("inputs should be same type");
     }

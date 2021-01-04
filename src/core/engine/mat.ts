@@ -1,5 +1,6 @@
 import { isTensor, isVertex } from './checks';
-import * as ops from './cpu/_ops_entry';
+import * as tensor_ops from './cpu/tensor_ops/tensor_ops_entry';
+import * as vertex_ops from './cpu/vertex_ops/vertex_ops_entry';
 import { Tensor } from './tensor';
 import { Vertex } from "./Vertex";
 
@@ -17,19 +18,9 @@ import { Vertex } from "./Vertex";
  */
 export function transpose<arr>(a:Vertex<arr>|Tensor<arr>, dim?:number[]){
     if(isVertex(a)){
-        const res_tensor = ops.transpose(a.tensor_, dim);
-        const res = new Vertex(res_tensor, [a]);
-    
-        res.back = () => {
-            a.grad_ = ops.add(
-                a.grad_,
-                ops.transpose(res.grad_, dim)
-            );
-        }
-    
-        return res;
+        return vertex_ops.transpose(a, dim);   
     }else if(isTensor(a)){
-        return ops.transpose(a, dim);   
+        return tensor_ops.transpose(a, dim);   
     }else{
         throw new Error("inputs should be same type");
     }
@@ -45,34 +36,9 @@ export function transpose<arr>(a:Vertex<arr>|Tensor<arr>, dim?:number[]){
  */
 export function matmul<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>):Vertex<arr>|Tensor<arr>{   
     if(isVertex(a) && isVertex(b)){
-        
-        const res_tensor = ops.matmul(a.tensor_, b.tensor_);
-        const res = new Vertex(res_tensor, [a, b]);
-    
-        res.back = () => {
-            a.grad_ = ops.add(
-                a.grad_,
-                
-                ops.matmul(
-                    res.grad_, ops.transpose(b.tensor_)
-                )
-    
-            );
-    
-            b.grad_ = ops.add(
-                b.grad_,
-             
-                ops.matmul(
-                    ops.transpose(a.tensor_), res.grad_
-                )
-    
-            );
-        }
-
-        return res;
-
+        return vertex_ops.matmul(a, b);   
     }else if(isTensor(a) && isTensor(b)){
-        return ops.matmul(a, b);      
+        return tensor_ops.matmul(a, b);      
     }else{
         throw new Error("inputs should be same type");
     }
@@ -82,22 +48,10 @@ export function matmul<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>
 export function concat<arr>(a:Vertex<arr>|Tensor<arr>, b:Vertex<arr>|Tensor<arr>, axis:number):Vertex<arr>|Tensor<arr>{   
     if(isVertex(a) && isVertex(b)){
         
-        const res_tensor = ops.concat(a.tensor_, b.tensor_, axis);
-        const res = new Vertex(res_tensor, [a, b]);
-    
-        res.back = () => {
-            const rato = a.tensor_.shape[axis] / (a.tensor_.shape[axis] + b.tensor_.shape[axis]);
-            const [a_res_grad, b_res_grad] = ops.disjoin(res.grad_, axis, rato);            
-
-            
-            a.grad_ = ops.add(a.grad_, a_res_grad);
-            b.grad_ = ops.add(b.grad_, b_res_grad);
-        }
-
-        return res;
+        return vertex_ops.concat(a, b, axis);      
 
     }else if(isTensor(a) && isTensor(b)){
-        return ops.concat(a, b, axis);      
+        return tensor_ops.concat(a, b, axis);      
     }else{
         throw new Error("inputs should be same type");
     }

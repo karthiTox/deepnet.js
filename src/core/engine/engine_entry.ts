@@ -1,11 +1,11 @@
 export {tensor} from './tensor';
 export {vertex} from './vertex';
-export * from './apply_act';
+export * from './apply_fn';
 export * from './basic';
 export * from "./arithmetic";
 export * from './mat';
-export * from "./cpu/gen";
-export type {avb_rand} from "./cpu/random"
+export * from "./cpu/tensor_ops/gen";
+export type {avb_rand} from "./util/random"
 export * from "./graph";
 export * as act from "./util/activation";
 

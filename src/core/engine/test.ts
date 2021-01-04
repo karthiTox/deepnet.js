@@ -1,5 +1,5 @@
 import { Vertex } from "./vertex";
-import * as dn from "./_entry_engine";
+import * as dn from "./engine_entry";
 
 let a;
 // // ceil
@@ -57,16 +57,9 @@ let a;
 
 
 // b test
-a = dn.vertex(dn.tensor([0.6, 1.1, -3.3]))
-a = dn.ceil(a);
-a = dn.cos(a);
-a = dn.sin(a)
-a = dn.tan(a);
-a = dn.floor(a) as Vertex<any>;
-// a = dn.neg(a);
-// a = dn.recp(a);
-// b = dn.neg(b) as Vertex<any>;
-a = dn.round(a) as Vertex<any>;
+a = dn.vertex(dn.tensor([6, 2, 4]));
+let b = dn.vertex(dn.tensor([2, 2, 3]));
+a = dn.divide(b, a) as Vertex<any>;
 
 // console.log(a)
 dn.backpass(a, dn.fill(a.tensor_.shape, 5));

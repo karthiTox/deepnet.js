@@ -1,5 +1,5 @@
-import * as engine from "./_entry_engine";
-import * as gen from "./cpu/gen";
+import * as engine from "./engine_entry";
+import * as gen from "./cpu/tensor_ops/gen";
 
 export const deepnet = {    
     tensor:engine.tensor,

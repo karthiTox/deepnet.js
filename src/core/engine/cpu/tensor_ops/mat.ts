@@ -1,4 +1,4 @@
-import { Tensor } from '../Tensor';
+import { Tensor } from '../../Tensor';
 import { multiply } from './basic';
 
 // Transpose
@@ -180,6 +180,7 @@ export function disjoin<arr>(a:Tensor<arr>, axis:number, ratio:number):Tensor<ar
 
     return [new Tensor(res1, shape1), new Tensor(res2, shape2)];
 }
+
 
 function _split_till(val:number[], shape:number[], axis:number){
     let a_shape = shape.slice(axis);
