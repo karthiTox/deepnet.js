@@ -1,0 +1,3 @@
+[submodule "src/core/AgDN"]
+	path = src/core/AgDN
+	url = https://github.com/karthiTox/AutogradDN.git
