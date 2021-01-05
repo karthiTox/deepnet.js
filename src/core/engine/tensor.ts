@@ -1,5 +1,8 @@
 import * as wasm from "./wasm/ops";
-import { module } from "./wasm/import_wasm"
+
+import { current_backend } from './backend';
+import { on_tensor } from "./memory";
+import { input } from "./input";
 
 export interface Tensor_interface{
     data:number[];
@@ -65,6 +68,7 @@ export class Tensor<m_arr> implements Tensor_interface{
         if(this._data.length != (this._shape.length == 0 ? 1 :this._shape.reduce((a, b)=>a*b))){
             throw new Error("given _shape is wrong")
         }
+
     }
     
 
@@ -137,17 +141,9 @@ export class Tensor<m_arr> implements Tensor_interface{
     }
 }
 
-/**
- * Creates a Tensor with the provided values and _shape.
- * @param values The values of the tensor. it can be n-dimensional array of numbers, or a TypedArray. 
- * @param _shape The _shape of the tensor. if it is not defined, it will be automatically found from values.
- */
-export function tensor<m_arr>(values:m_arr, _shape?:number[]){
-    return new Tensor(values, _shape)
-}
-
 export class TensorView<m_arr> implements Tensor_interface{
     public Memory_address:number = 0;
+    public isdestroyed:boolean = false;
     
     public get data():number[]{
         const dp = wasm.ops.get_data(this.Memory_address);
@@ -190,6 +186,8 @@ export class TensorView<m_arr> implements Tensor_interface{
             this.data = extract(array);
             this.shape = shape ? Array.from(shape) : find_shape(array);       
         }
+        
+        on_tensor.emit("created", this);
     }
 
     print(){ 
@@ -198,10 +196,28 @@ export class TensorView<m_arr> implements Tensor_interface{
     };
 
     destroy(){
-        wasm.ops.destroy_tensor(this.Memory_address);
+        if(!this.isdestroyed){
+            wasm.ops.destroy_tensor(this.Memory_address);
+            this.isdestroyed = true;
+        }
     };
 }
 
+/**
+ * Creates a Tensor with the provided values and _shape.
+ * @param values The values of the tensor. it can be n-dimensional array of numbers, or a TypedArray. 
+ * @param _shape The _shape of the tensor. if it is not defined, it will be automatically found from values.
+ */
+export function tensor<m_arr>(values:m_arr, _shape?:number[]){    
+    switch (current_backend) {
+        default:
+        case "CPU":
+            return new Tensor(values, _shape);
+           
+        case "WASM":           
+            return new TensorView(values, _shape);
+    }    
+}
 
 
 export type Tensor_types<arr> = Tensor<arr> | TensorView<arr>;

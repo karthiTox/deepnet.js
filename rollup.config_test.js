@@ -1,8 +1,6 @@
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import babel from "rollup-plugin-babel";
-import {terser} from "rollup-plugin-terser";
-import * as pkg from './package.json';
 import { wasm } from '@rollup/plugin-wasm';
 import { copyto } from "./rollup-plugin-copy-to";
 
@@ -36,7 +34,7 @@ const config = {
         exclude: ['node_modules/**/*']
       }),
 
-      copyto("./src/core/engine/wasm/wasm-build/test.wasm", "./dist_test/")
+      // copyto("./src/core/engine/wasm/wasm-build/ems.wasm", "./dist_test/")
     ],
   };
   

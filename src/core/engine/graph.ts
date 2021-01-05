@@ -1,7 +1,17 @@
-import { isVertex } from "./checks";
+import { current_backend } from './backend';
+
+import { Vertex_types } from "./Vertex";
+import { Tensor_types } from "./tensor";
+import { isTensor, isTensorView, isVertex, isVertexView } from './checks';
+
 import { sub } from "./cpu/tensor_ops/tensor_ops_entry";
 import { Tensor } from "./tensor";
 import { Vertex } from "./Vertex";
+
+import { input } from "./input"
+import { get_ops } from './wasm/ops';
+
+import { debug_cpu, debug_wasm } from "./logger"
 
 /**
  * This will Compute the gradient (derivatives) of the current vertex's tensor (tensor_) and 
@@ -14,15 +24,41 @@ import { Vertex } from "./Vertex";
  * @param res Resultant vertex or Starting vertex.
  * @param initial_grad Initial grad or derivative to start with.
  */
-export function backpass<a>(res:Vertex<a>, initial_grad?:Tensor<any>){
-    if(!isVertex(res)) throw new Error("backpass will only works with vertex");
-    if(initial_grad) res.grad_ = initial_grad;
+export function backpass<a>(res:Vertex_types<a>, initial_grad?:Tensor_types<a>){
     
-    res.back();
-    if(res.parents_){
-        res.parents_.forEach((p) => {
-            backpass(p);
-        })
+    switch (current_backend) {
+        default:
+        case "CPU":
+            
+            if(!isVertex(res)) 
+            throw new Error("backpass will only works with vertex");
+            
+            if(initial_grad)
+                if(isTensor(initial_grad)) {
+                    debug_cpu.log("backpass cpu")
+                    res.grad_ = initial_grad;
+                }
+            
+            res.back();
+            if(res.parents_){
+                res.parents_.forEach((p) => {
+                    backpass(p);
+                })
+            }
+            break;
+    
+        case "WASM":
+            debug_wasm.log("backpass Wasm")
+            if(!isVertexView(res)) 
+                throw new Error("backpass will only works with vertexView");
+                
+            if(initial_grad)
+                if(isTensorView(initial_grad))                      
+                    res.grad_.data = initial_grad.data;
+
+            get_ops("graph_backpass")(res.Memory_address);
+            break;
+            
     }
 }
 
@@ -34,17 +70,34 @@ export function backpass<a>(res:Vertex<a>, initial_grad?:Tensor<any>){
  * @param rate Learning Rate
  */
 export function update_loss<a>(res:Vertex<a>, rate:number = 0.04){     
-    if(!isVertex(res)) throw new Error("update_loss will only works with vertex");
+    switch (current_backend) {
+        default:
+        case "CPU":
+            debug_cpu.log("update loss cpu")
+            
+            if(!isVertex(res)) throw new Error("update_loss will only works with vertex");
+            
+            for(let i = 0; i < res.tensor_.data.length; i++){
+                const val = (res.grad_.data[i] * rate);    
+                res.tensor_.data[i] -=  val ? val : 0;
+            }
+        
+            if(res.parents_){
+                res.parents_.forEach((p) => {
+                    update_loss(p, rate);
+                })
+            }           
+            break;
+             
+            
+        case "WASM":
+            debug_wasm.log("update loss wasm")
+           if(!isVertexView(res)) 
+                throw new Error("backpass will only works with vertexView");                
 
-    for(let i = 0; i < res.tensor_.data.length; i++){
-        const val = (res.grad_.data[i] * rate);    
-        res.tensor_.data[i] -=  val ? val : 0;
-    }
+            get_ops("graph_update_loss")(res.Memory_address, rate);
+            break;
 
-    if(res.parents_){
-        res.parents_.forEach((p) => {
-            update_loss(p, rate);
-        })
     }
 }
 
@@ -56,13 +109,29 @@ export function update_loss<a>(res:Vertex<a>, rate:number = 0.04){
  * @param res Resultant vertex or Starting vertex.
  */
 export function grad_zero<a>(res:Vertex<a>){
-    if(!isVertex(res)) throw new Error("grad_zero will only works with vertex");
+    switch (current_backend) {
+        default:
+        case "CPU":
+            if(!isVertex(res)) throw new Error("grad_zero will only works with vertex");
+        
+            res.grad_.data = res.grad_.data.map(v => 0);
+            if(res.parents_){
+                res.parents_.forEach((p) => {
+                    grad_zero(p);
+                })
+            }
+            
+            break;
 
-    res.grad_.data = res.grad_.data.map(v => 0);
-    if(res.parents_){
-        res.parents_.forEach((p) => {
-            grad_zero(p);
-        })
+            
+        case "WASM":
+            debug_wasm.log("grad_zero using wasm")
+           if(!isVertexView(res)) 
+                throw new Error("grad_zero will only works with vertexView");                
+
+            get_ops("graph_grad_zero")(res.Memory_address);
+            break;
+
     }
 }
 
@@ -74,18 +143,37 @@ export function grad_zero<a>(res:Vertex<a>){
  * @param res Resultant vertex or Starting vertex.
  */
 export function detach<a>(res:Vertex<a>){
-    if(!isVertex(res)) throw new Error("detach will only works with vertex");
+    switch (current_backend) {
+        default:
+        case "CPU":
+            debug_cpu.log("detach cpu")
+        
+            if(!isVertex(res)) throw new Error("detach will only works with vertex");
 
-    if(res.parents_){
-        res.parents_.forEach((p) => {
-            detach(p);
-        })
-    }
+            if(res.parents_){
+                res.parents_.forEach((p) => {
+                    detach(p);
+                })
+            }
+        
+            if(res.parents_){
+                res.parents_.forEach((v, i) => {
+                    if(res.parents_) delete res.parents_[i];
+                });        
+            }      
+            
+            res.destroy();
+            break;
 
-    if(res.parents_){
-        res.parents_.forEach((v, i) => {
-            if(res.parents_) delete res.parents_[i];
-        });        
+            
+        case "WASM":
+            debug_wasm.log("detach using wasm")
+           if(!isVertexView(res)) 
+                throw new Error("backpass will only works with vertexView");                
+
+            get_ops("graph_detach")(res.Memory_address);
+            break;
+
     }
 }
 

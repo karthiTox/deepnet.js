@@ -49,6 +49,7 @@ Module().then((wasm_module:Ems.Module_)=>{
     ops[ "graph_backpass"] = wasm_module.cwrap( "graph_backpass", null, ["number"]);    
     ops[ "graph_detach"] = wasm_module.cwrap( "graph_detach", null, ["number"]);    
     ops[ "graph_update_loss"] = wasm_module.cwrap( "graph_update_loss", null, ["number", "number"]);    
+    ops[ "graph_grad_zero"] = wasm_module.cwrap( "graph_grad_zero", null, ["number"]);    
     ops[ "matmul_tensor"] = wasm_module.cwrap( "matmul_tensor", "number", ["number", "number"]);    
     ops[ "matmul_vertex"] = wasm_module.cwrap( "matmul_vertex", "number", ["number", "number"]);    
     ops[ "multiply_tensor"] = wasm_module.cwrap( "multiply_tensor", "number", ["number", "number"]);    

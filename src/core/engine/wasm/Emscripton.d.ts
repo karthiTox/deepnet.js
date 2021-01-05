@@ -90,6 +90,7 @@ export type Module_Functions =
 "graph_backpass"|
 "graph_update_loss"|
 "graph_detach"|
+"graph_grad_zero"|
 "get_memory_usage";
 
 

@@ -1,7 +1,19 @@
-import { Tensor, TensorView, Tensor_interface } from "./Tensor";
+import { Tensor, TensorView, Tensor_interface, Tensor_types } from "./Tensor";
 import { get_ops } from "./wasm/ops";
 
-export class Vertex<a>{
+import { current_backend } from './backend';
+import { isTensor, isTensorView } from "./checks";
+import { on_vertex } from "./memory";
+
+interface vertex_interface<a>{
+    tensor_?:Tensor_types<a>,     
+    grad_:Tensor_types<a>,
+    setDestroy(y:boolean):void,
+    print():void;
+    destroy():void;
+}
+
+export class Vertex<a> implements vertex_interface<a>{
     constructor(
         public tensor_:Tensor<a>, 
         public parents_:Vertex<a>[] = [],
@@ -23,6 +35,10 @@ export class Vertex<a>{
     set_grad<a>(grad:Tensor<a>){
         this.grad_ = grad;
     }
+
+    setDestroy(y:boolean){}
+
+    destroy(){}
 }
 
 /**
@@ -33,20 +49,37 @@ export class Vertex<a>{
  * @param name Name of the vertex.
  */
 export function vertex<a>(
-    tensor:Tensor<a>, parents?:Vertex<a>[], grad?:Tensor<a>, name?:string,
+    tensor:Tensor<a>|TensorView<a>, parents?:Vertex<a>[], grad?:Tensor<a>, name?:string,
 ){
-    return new Vertex<a>(
-        tensor, 
-        parents, 
-        grad, 
-        name
-    );
+
+    switch (current_backend) {
+        default:
+        case "CPU":
+            if(isTensor(tensor))
+            return new Vertex<a>(
+                tensor, 
+                parents, 
+                grad, 
+                name
+            );
+            else
+            throw new Error("Tensor is needed")
+           
+        case "WASM":           
+            if(isTensorView(tensor))
+            return new VertexView<a>(
+                tensor,
+            );
+            else
+            throw new Error("TensorView is needed")
+    }
 }
 
 
-export class VertexView<a>{
+export class VertexView<a> implements vertex_interface<a>{
     public Memory_address:number = 0;
-    
+    public isdestroyed:boolean = false;
+
     public grad_:TensorView<a>;
 
     constructor(
@@ -67,6 +100,8 @@ export class VertexView<a>{
                 throw new Error("tensor is not given")
             }
         }
+
+        on_vertex.emit("created", this)
     }
 
     print(){       
@@ -77,9 +112,16 @@ export class VertexView<a>{
         get_ops("set_destroy")(this.Memory_address, y?1:0);
     }
 
-    destroy(){        
-        this.grad_.destroy();
-		get_ops("destroy_vertex")(this.Memory_address);
+    destroy(){ 
+        if(!this.isdestroyed) {
+            if(!this.tensor_?.isdestroyed){
+                this.tensor_?.destroy();
+            }   
+    
+            this.grad_.destroy();
+            get_ops("destroy_vertex")(this.Memory_address);
+            this.isdestroyed = true;
+        }        
 	}
 }
 

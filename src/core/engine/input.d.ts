@@ -1,0 +1,1 @@
+export type input<arr> = Vertex_types<arr>|Tensor_types<arr>;
