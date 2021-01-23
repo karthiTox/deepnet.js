@@ -5,10 +5,11 @@ import {terser} from "rollup-plugin-terser";
 // import { wasm } from '@rollup/plugin-wasm';
 
 const extensions = ['.mjs', '.js', '.json', '.node', '.ts'];
-const name = 'deepnet';
+const name = "deepnet";
+const entry = "src/core/engine/entry.ts"
 
 const config = {
-    input: 'src/core/engine/autograd.ts',    
+    input: entry,    
     output: [
       {
         file: 'dist/'+name+'-browser.mjs',

@@ -5,7 +5,6 @@ src/blocks/tests/tf.html
 
 src/blocks/tests/n-array/test.js
 src/blocks/tests/n-array/test.py
-src/core/engine/wasm/wasm-build/
 
 
 node_modules/

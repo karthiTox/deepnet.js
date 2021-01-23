@@ -1,5 +1,3 @@
-export type avb_rand = "rand_float" | "rand_int" | "rand_Gauss" | "rand_normal";
-
 export function randFloat(min: number, max: number): number {
     return Math.random() * (max - min) + min;
 }
@@ -44,21 +42,6 @@ randGauss.val = 0;
 
 export function randn(m: number, std: number): number {
     return m + randGauss() * std;
-}
-
-export function getRand(type?:avb_rand){
-    switch (type) {
-        case "rand_float":
-            return randFloat;
-        case "rand_normal":
-            return randn;
-        case "rand_int":
-            return randInt;
-        case "rand_Gauss":
-            return randGauss;            
-        default:
-            return rand;
-    }
 }
 
   

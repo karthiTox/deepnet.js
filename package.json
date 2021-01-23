@@ -1,6 +1,6 @@
 {
   "name": "deepnet.js",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Auto-differentiation library for javascript",
   "main": "dist_node/deepnet.main.js",
   "module": "dist_node/deepnet.mod.js",
@@ -12,7 +12,8 @@
     "build:browser": "rollup -c rollup.config.browser.js",
     "build:node": "rollup -c rollup.config.js",
     "build:test": "rollup -c rollup.config_test.js",
-    "build": "npm run build:browser && npm run build:node"
+    "build": "npm run build:browser && npm run build:node",
+    "build:wasm": "cd scripts && build_wasm.bat && cd .."    
   },
   "repository": {
     "type": "git",

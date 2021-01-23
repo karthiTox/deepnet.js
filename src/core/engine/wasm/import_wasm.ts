@@ -1,4 +1,4 @@
-import Module from './wasm-build/dn_backend_wasm';
+import Module from './wasm_build/dn_backend_wasm';
 export let module = Module;
 
 // export let waiting = Module();

@@ -7,7 +7,7 @@ import { copyto } from "./rollup-plugin-copy-to";
 const extensions = ['.mjs', '.js', '.json', '.node', '.ts'];
 const name = 'deepnet';
 
-let entry = 'src/core/engine/tensor.test.ts'
+let entry = 'src/layers/layer.test.ts'
 
 const config = {
     input: entry,    

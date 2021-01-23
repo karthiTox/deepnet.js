@@ -1,8 +1,9 @@
-import * as autograd from "./core/engine/engine_entry";
+import * as backs from "./ops"
+import * as layers from "./layers"
 
-export const deepnet = {    
-    autograd:autograd,
-    layers:{}
+export let deepnet = {
+    backends: backs,
+    nn: layers
 }
 
 declare global {

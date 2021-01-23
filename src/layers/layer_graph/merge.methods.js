@@ -1,5 +1,5 @@
-const { add, sub, multiply } = require("../core/ndfn/ops/basic_ops")
-const { concat } = require("../core/ndfn/ops/matrix_ops")
+const { add, sub, multiply } = require("../../core/ndfn/ops/basic_ops")
+const { concat } = require("../../core/ndfn/ops/matrix_ops")
 
 module.exports = {
     add:(res) => {
