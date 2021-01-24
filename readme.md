@@ -1,11 +1,15 @@
 ## deepnet.js
 
-<img src="logo.png" width="200" height="200" />
+<p align="center">
+    <img src="logo.png" width="200" height="200" />
+</p>
 
-deepnet.js is an auto-differentiation library for javascript. it will compute the gradients in both static and dynamic method.
+--------------------------------------------------------------------
+
+__deepnet.js__ is an auto-differentiation library for javascript. it will compute the gradients in both static and dynamic method.
 
 > :warning: **Deepnet.js** is reimplemented from ground to support sparse tensor, broadcast
-> and also various backends are in development, If you are using the older versions 1.0.2 or below, 
+> and various backends are in development, If you are using the older versions 1.0.2 or below, 
 > please upgrade your code accordingly.
 
 ## Installation
@@ -63,70 +67,105 @@ deepnet.backends.cpu().then((backend) => {
 
 </script>
 ```
+## Getting started
 
-## Autodiff
+### Table of Contents
+
+* [Autodiff](#Autodiff)
+* [Platforms/Backends](#Platforms/Backends)
+* [Tensor](#Tensor)
+* [Vertex - `deprecated`](#Vertex)
+* [Operations](#Operations)
+    * [Broadcasting](#Broadcasting)
+    * [basic operations](#basic_operation)
+    * [Matmul two Tensors](#Matmul_two_Tensors)
+    * [Backpass example](#Backpass_example)
+* [fully connected example](#fully_connected_example)
+
+### Autodiff
 
 Autodiff (Automatic Differentitation) is a technique which uses a computational graph to compute a derivatives automatically. 
 
 In the forward phase, it executes the math operation and constructs the computational graph, and In the backward phase, the dervatives are computed automatically.
 
-## tensor
+### Platforms/Backends
+
+Platforms adds support for various environments to run your neural networks.
+
+* cpu(..), (js-environment) pure js implementaion for the browser and nodejs.
+
+```js
+deepnet.platforms.cpu().then((dn) => {        
+    dn.tensor(..)
+    dn.add(..)
+    ...    
+}); 
+```
+
+### Tensor
 
 A tensor is a scalar or a vector or a multidimensional array. it can be created using dn.tensor(..)
 
 ```js
-const a = dn.tensor([1, 2, 3, 4], [2, 2], is_sparse = false);
+deepnet.platforms.cpu().then((dn) => {
+    
+    let dense = dn.tensor([1, 2, 3, 4], [2, 2], is_sparse = false);    
+    dense.print();
+
+    let sparse = dn.tensor([1, 2, 0, 4, 5, 6, 0, 0], [2, 2, 2], is_sparse = true);    
+    sparse.print();
+
+});
 ```
 
 __Contains:__
-* __data__ The values of the tensor. Array of numbers.
 
-* __shape__ The shape of the tensor. if it is not defined, it will be automatically found from data.
+* __value__ Initial value for the tensor.
+    
+    * __data__ Array of numbers.
+
+    * __shape__ The shape of the tensor. if it is not defined, it will be automatically found from data.    
+
+* __grad__ Stores the derivation of the tensor, it will be filled while backpass().
+
+    * __data__ Array of numbers.
+
+    * __shape__ The shape of the grad. if it is not defined, it will be automatically found from data.
+
+* __parents__ Stores the Parents (vertex[]), from which it is created.
+
+* __print()__ prints the tensor.
+
+* __feed()__ Recalculates the values respectively, it will fills the value.
+
+* __back()__ Calculates the derivation, it will fills the grad.
 
 * __is_sparse__ it is used specify whether the tensor to be created is sparse or dense. default false.
 
-## Vertex
+### Vertex
 
 > :warning: **dn.vertex(..) is deprecated.** Use dn.tensor(..) directly. 
 
-## Examples
- 
-__Creating a tensor__
+### Operations
+
+#### Broadcasting
+
+deepnet.js supports broadcasting, no copy or temporary variables are created.
+
+#### basic_operation
 
 ```js
-deepnet.backends.cpu().then((dn) => {
-    
-    const a = dn.ones([2, 2]);
-    const b = dn.zeros([2, 2], is_sparse = true);
-    
-    a.print();
-    b.print();
-
-})
-```
-
-Output:
-```
-Tensor
-[[1 1]
- [1 1]]
-```
-
-__Basic tensor operations__
-
-add, sub, mul, div, matmul - supports broadcast
-
-```js
-deepnet.backends.cpu().then((dn) => {
+deepnet.platforms.cpu().then((dn) => {
     
     // supports broadcasting
     const a = dn.ones([2, 2, 2]);
-    const b = dn.zeros([2, 2], is_sparse = true);
-    
+    const b = dn.zeros([2, 2]);
+        
     const res = dn.add(a, b);
+    // dn.sub(..), dn.mul(..), dn.div(..) 
 
     res.print();
-
+    
 })
 ```
 
@@ -135,83 +174,107 @@ Output:
 Tensor
 [[[1 1]
   [1 1]]
+
  [[1 1]
   [1 1]]]
 ```
 
-__Multiplying two vertices__
+#### Matmul_two_Tensors
 
 ```js
-const a = dn.vertex(dn.fill([2, 2], 5));
-const b = dn.vertex(dn.fill([2, 2], 2));
-
-const result = dn.mul(a, b);
-result.print();
+deepnet.platforms.cpu().then((dn) => {
+    
+    // supports broadcasting
+    const a = dn.ones([2, 2, 2]);
+    const b = dn.ones([2, 2]);
+        
+    const res = dn.matmul(a, b);
+    res.print();
+    
+})
 ```
 
 Output:
 ```
 Tensor
-[[10 10]
- [10 10]]
+[[[2 2]
+  [2 2]]
+
+ [[2 2]
+  [2 2]]]
 ```
 
-__Backpass example__
+### Available_methods
+
+Available methods under the deepnet.platforms.cpu(..)
+
+* tensor
+* randn
+* ones
+* zeros
+* fill
+* add
+* sub
+* mul
+* div
+* transpose
+* matmul
+* get_output
+* grad_zero
+* backpass
+* sig
+* relu
+* tanh
+* recp
+
+### Backpass_example
 
 __dn.backpass()__
 
-dn.backpass() will Compute the gradients (derivatives) of the current tensor and 
+dn.backpass(..tensor..) will Compute the gradients (derivatives) of the current tensor and 
 adds the computed gradients with the grad (grad_ is initialized with value (0)).
 
 grad must be zero before calling dn.backpass(). The graph which is constructed while the forword operation is differentiated using chain rule. 
 
 __dn.update_loss()__
 
-dn.update_loss() will update the tensor's value with grad (it with simple subtracts the tensor's value from tensor's grad).
-this should be called after backpass.
-
+> :warning: **dn.update_loss(..) is deprecated.** Use dn.optimizer.SGD(..).step() instead.
 
 __dn.grad_zero()__
 
 dn.grad_zero() will Reset the tensor's grad (it will simple set grad to zero). 
-this should be called after update_loss.
+this should be called after dn.optimizer.SGD(..).step().
 
 __dn.detach()__
 
-dn.detach() will detach the graph. this should be called at end.
+> :warning: **dn.detach(..) is deprecated.** Automatically detached.
 
 __dn.traversal()__
 
 > :warning: **dn.traversal(..) is deprecated.** Use dn.tensor(..).grad.print() to print specifically.
 
 ```js
+deepnet.platforms.cpu().then((dn) => {
+    
+    // supports broadcasting
+    const a = dn.ones([1, 2]);
+    const w = dn.ones([2, 2]);
+    const b = dn.ones([1, 2]);
 
-const a = dn.fill([2, 2], 5);
-const w = dn.fill([2, 2], 2);
+    const optim = dn.optimizer.SGD([w, b], 0.04);
 
-const b = dn.fill([2, 2], 2);
+    const mres = dn.matmul(a, w);
+    const result = dn.add(mres, b);
+    
+    dn.backpass(result);
+    optim.step();
+    dn.grad_zero(result);
 
-const matmul_result = dn.matmul(a, w);
-const result = dn.add(matmul_result, b);
-
-dn.backpass(result);
-w.grad.print();
-b.grad.print();
+})
 
 ```
 
-Output: ( prints each tensor's grad )
-```
-Tensor
-[[10 10]
- [10 10]]
-
-Tensor
-[[1 1]
- [1 1]]
-```
-
-## fully connected example
+### fully_connected_example
 
 ```js
 

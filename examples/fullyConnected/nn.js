@@ -1,42 +1,44 @@
-const dn = require("deepnet.js");
+const deepnet = require("deepnet.js");
 
-function sig(z) {
-    return 1.0 / ( 1.0 + Math.exp(-z) )
-}
+basic_nn();
 
-function sigPrime(z) {
-    return (1.0 / ( 1.0 + Math.exp(-z) )) * (1 - (1.0 / ( 1.0 + Math.exp(-z) )))
-}
+async function basic_nn(){
+    let dn = await deepnet.platforms.cpu();
 
-function fully_connected(input, weights, biases){
-    let res1 = dn.matmul(input, dn.transpose(weights));                
-    let res2 = dn.add(res1, biases);
-    let res = dn.applyfn(res2, sig, sigPrime);
-
-    return res;
-}  
-
-function loss(a, y){
-    return dn.sub(a, y);
-}
-
-let w = dn.vertex(dn.rand([5, 2]));
-let b = dn.vertex(dn.rand([1, 5]));
-
-for (let iteration = 0; iteration < 1000; iteration++) {
+    console.time("test")
+    // prime
+    let input_tensor = dn.tensor([0, 0, 1, 1, 0, 1, 0, 1, 0, 0], [1, 10]);        
     
+    let l1b = deepnet.nn.Linear(dn, 10, 5);
+    let l2b = deepnet.nn.Linear(dn, 5, 1);
     
-    let a = dn.vertex(dn.ones([1, 2]));
+    let l1 = dn.sig(l1b(input_tensor));
+    let l2 = dn.sig(l2b(l1)); 
+       
+    let optim = dn.optimizer.SGD([l1b.weights, l1b.biases, l2b.weights, l2b.biases], 0.04);
     
-    let result = fully_connected(a, w, b);
-    let output = dn.tensor([0, 1, 0, 1, 0], [1, 5]);
-    
-    dn.backpass(result, loss(result.tensor_, output));
-    dn.update_loss(result, 0.04);
-    dn.grad_zero(result);
-    dn.detach(result);
+    for (let i = 0; i < 700; i++) {
+        // prime        
+        input_tensor.value.data = [0, 0, 1, 1, 0, 1, 0, 1, 0, 0];
+        dn.get_output(l2);
+        dn.backpass(l2, dn.tensor(l2.value.data.map((v, i)=>v-1), l2.value.shape));                
+        optim.step();
+        dn.grad_zero(l2);
 
+        // !prime        
+        input_tensor.value.data = [1, 1, 0, 0, 1, 0, 1, 0, 1, 1];
+        dn.get_output(l2);
+        dn.backpass(l2, dn.tensor(l2.value.data.map((v, i)=>v-0), l2.value.shape));                
+        optim.step();
+        dn.grad_zero(l2);
+    }
+
+    input_tensor.value.data = [0, 0, 1, 1, 0, 1, 0, 1, 0, 0];
+    dn.get_output(l2);
+    l2.value.print();
+    
+    input_tensor.value.data = [1, 1, 0, 0, 1, 0, 1, 0, 1, 1];
+    dn.get_output(l2);
+    l2.value.print();
+    console.timeEnd("test");
 }
-
-let prediction = fully_connected(dn.ones([1, 2]), w.tensor_, b.tensor_)
-prediction.print(); // [0, 1, 0, 1, 0]

@@ -2,7 +2,7 @@ import * as backs from "./ops"
 import * as layers from "./layers"
 
 export let deepnet = {
-    backends: backs,
+    platforms: backs,
     nn: layers
 }
 

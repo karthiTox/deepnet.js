@@ -1,7 +1,7 @@
 import { deepnet } from "./entry";
 
 async function basic_nn(){
-    let dn = await deepnet.backends.cpu();
+    let dn = await deepnet.platforms.cpu();
     console.time("test")
     // prime
     let input_tensor = dn.tensor([0, 0, 1, 1, 0, 1, 0, 1, 0, 0], [1, 10]);        
@@ -41,7 +41,7 @@ async function basic_nn(){
 }
 
 async function run() {
-    let dn = await deepnet.backends.cpu();    
+    let dn = await deepnet.platforms.cpu();    
     let a = dn.tensor([1, 2], [1, 2]);
     let w = dn.tensor([1, 2, 3, 4], [2, 2]);
     let b = dn.tensor([1, 2], [1, 2]);
@@ -56,8 +56,6 @@ async function run() {
     w.grad.print();
     a.grad.print();
 }
-
-basic_nn();
 
 // function fully_connected(input:any, weights:any, biases:any){
 //     let res1 = dn.matmul(input, dn.transpose(weights));                

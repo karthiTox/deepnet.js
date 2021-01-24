@@ -133,7 +133,16 @@ export class ops
         return [s1, s2, res];
     }
 
-    static basic <arr>( a:nArray<arr>, b:nArray<arr>, result:nArray<arr>, op_type:Basic_types = Basic_types.add ) {
+    static basic <arr>( a:nArray<arr>, b:nArray<arr>, result:nArray<arr>, op_type:Basic_types = Basic_types.add ) {        
+        if (op_type == this.basic_types.sub) {
+            let n = new nArray(b.data, b.shape, b.is_sparse);
+            for (let i = 0; i < n.data.length; i++) {
+                n.data[i] *= -1;                
+            }
+            b = n;
+            op_type = this.basic_types.add;
+        }
+        
         if (a.shape.reduce((n1, n2) => n1 * n2) > b.shape.reduce((n1, n2) => n1 * n2)) {            
             return this.basic_main(a, b, result, op_type);
         } else {
@@ -141,7 +150,7 @@ export class ops
         }        
     }
     
-    protected static basic_main<arr>( a:nArray<arr>, b:nArray<arr>, result:nArray<arr>, op_type:Basic_types){                        
+    static basic_main<arr>( a:nArray<arr>, b:nArray<arr>, result:nArray<arr>, op_type:Basic_types){                        
         let [a_shape, b_shape, res_shape] = this.broadcast_dim(a.shape, b.shape);       
         let [a_step, b_step, res_step] = [a_shape, b_shape, res_shape].map(v => util.cal_step(v));
         let size = res_shape.reduce((a, b) => a*b);
@@ -208,38 +217,20 @@ export class ops
             }
 
             return result;
-        }
-        if(true)
-        {                                     
 
-            let is_equal = true;
-            if(a.shape.length = b.shape.length)
-                for (let i = 0; i < b.shape.length; i++) 
-                    if(a.shape[i] != b.shape[i]) {
-                        is_equal = false; break;
-                    }
-
-            if (is_equal) {
-                for (let d = 0; d < a.data.length; d++)
-                {
-                    result.data[d] = this.basic_op(a.data[d], b.data[d], op_type)
-                }
-            } else{
-
-                for (let d = 0; d < size; d++)
-                {
-                    let res_index = util.find_index(res_shape, a_step, d)
-                    let aindex = res_index.map((r,i) => r%a_shape[i]);
-                    let bindex = res_index.map((r,i) => r%b_shape[i]);
-                    let ai = util.cal_index(aindex, a_step);
-                    let bi = util.cal_index(bindex, b_step);
-                    
-                    result.data[d] = this.basic_op( a.data[ai], b.data[bi], op_type );
-                };
-
-            }
+        } else {  
             
-            
+            for (let d = 0; d < size; d++)
+            {
+                let res_index = util.find_index(res_shape, a_step, d)
+                let aindex = res_index.map((r,i) => r%a_shape[i]);
+                let bindex = res_index.map((r,i) => r%b_shape[i]);
+                let ai = util.cal_index(aindex, a_step);
+                let bi = util.cal_index(bindex, b_step);
+                
+                result.data[d] = this.basic_op( a.data[ai], b.data[bi], op_type );
+            };
+        
             return result;
         }                       
         
@@ -598,15 +589,16 @@ export class ops
 // r.print();
 // console.timeEnd("start")
 
-
+// console.log("start")
 // console.time("start")
-// let a = new nArray([1, 2], [2, 1], false);
-// let b = new nArray([1, 1], [1, 2], false);
-// let r = new nArray([], [2, 2], true)
-// ops.matmul(    
+// let a = new nArray([1, 2, 0, 0, 5, 6, 0, 0], [2, 2, 2], false);
+// let b = new nArray([1, 2, 3, 4], [2, 2], false);
+// let r = new nArray([], [2, 2, 2], false)
+// ops.basic_main(    
 //     a,
 //     b,
-//     r,    
+//     r,  
+//     ops.basic_types.add 
 // )
 // r.print();
 // console.timeEnd("start")

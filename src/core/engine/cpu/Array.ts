@@ -40,11 +40,131 @@ export class nArray<m_arr>{
             return i;
     }
 
-    print(){                    
-        console.log(this.is_sparse ? "Sparse Array" : "Array");
-        console.log(this.data);
-        if(this.is_sparse) console.log(this.index);
-        console.log(this.shape);        
+    print() {
+        // reconstructing the data
+        let data = [];
+        if(!this.is_sparse){
+            data = this.data;
+        } else {
+            let tot = this.shape.reduce((a, b) => a * b);
+            let cur = 0;
+            for (let d = 0; d < this.index.length; d++) {
+                if (cur == this.index[d]) {
+                    data[cur] = this.data[d];
+                    cur++;
+                } else {
+                    let missing = this.index[d] - cur;
+
+                    for (let m = 0; m < missing; m++) {                        
+                        data.push(0);
+                    }
+
+                    data.push(this.data[d]);
+                    cur = this.index[d];
+                    cur++;
+                }
+            }
+
+            
+            let last_missing = tot - data.length;
+            for (let i = 0; i < last_missing; i++) {
+                data.push(0);                               
+            }
+        }
+
+        let ns = "";
+    
+        let t_el = [];
+    
+        for (let i = 0; i < this.shape.length; i++){
+            let t = 1;
+            for (let j = i; j < this.shape.length; j++) {
+                t *= this.shape[j];
+            }
+            t_el.push(t);
+        }
+    
+        for (let i = 0; i < this.shape.length; i++) {
+            ns += "[";
+        }
+    
+        let i = 0;
+        let count = 0;
+        for (let di = 0; di < data.length; di++) {
+            let d = data[di];
+
+            for (const s of t_el) {
+                if(i%s == 0){
+                    count++;
+                }
+            }
+    
+            if (i != 0) {
+                if (count > 0) {
+                    ns = ns.substring(0, ns.length - 1);
+                    for (let i = 0; i < count; i++) {
+                        ns += "]";
+                    }
+                    ns += ",";
+                    for (let i = 0; i < count; i++) {
+                        ns += "[";
+                    }
+                }
+            }
+    
+            ns += d;
+            ns += ",";
+    
+            i++;
+            count = 0;
+        }
+    
+        ns = ns.substring(0, ns.length - 1);
+        for (let i = 0; i < this.shape.length; i++) {
+            ns += "]";
+        };
+    
+        this.print_tensor(ns, this.shape.length);
+    };
+    
+    
+    private print_tensor(res:string, count:number){
+        let str = res;
+        console.log(`${this.is_sparse?'Sparse ':''}Tensor`);
+    
+        let to_print = "";
+
+        for (let c = 0; c < str.length; c++) {		
+            if (str[c] == ',' && str[c + 1] == '[') {
+                let cn_count = 0;
+    
+                for (let cn = c + 1; cn < str.length; cn++) {
+                    if (str[cn] != '[') break;
+                    cn_count += 1;
+                }
+    
+                for (let i = 0; i < cn_count; i++){
+                    to_print += "\n";
+                }
+    
+                for (let i = 0; i < (count - cn_count); i++){
+                    to_print += " ";
+                }
+    
+                continue;
+            }
+    
+            else if (str[c] == ',') {
+                to_print += " ";
+            }
+            else {
+                to_print += str[c];
+            }
+        }
+        
+        console.log(to_print + "\n")        
+
+    
     }
 }
 

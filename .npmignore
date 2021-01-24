@@ -8,4 +8,7 @@ examples/
 .gitignore
 jest.config.js
 rollup.config.js
+rollup.config.browser.js
+rollup.config_test.js
+rollup-plugin-copy-to.js
 tsconfig.json
