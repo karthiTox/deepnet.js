@@ -1,26 +1,22 @@
 ## deepnet.js
 
-<p align="center">
-    <img src="logo.png" width="200" height="200" />
-</p>
-
---------------------------------------------------------------------
+<img src="logo.png" width="220" height="220" />
 
 __deepnet.js__ is an auto-differentiation library for javascript. it will compute the gradients in both static and dynamic method.
 
 > :warning: **Deepnet.js** is reimplemented from ground to support sparse tensor, broadcast
-> and various backends are in development, If you are using the older versions 1.0.2 or below, 
+> and various backends are in development, If you are using the older versions (1.0.2 or below), 
 > please upgrade your code accordingly.
 
 ## Installation
 
-## NPM
+### NPM
 
 ```bash
 npm install deepnet.js
 ```
 
-## CDN
+### CDN
 
 ```CDN
 https://unpkg.com/deepnet.js@latest/dist/deepnet-browser.min.js
@@ -29,12 +25,12 @@ https://unpkg.com/deepnet.js@latest/dist/deepnet-browser.js
 
 ## Usage
 
-## Node
+### Node
 
 ```js
 const deepnet = require("deepnet.js");
 
-deepnet.backends.cpu().then((backend) => {
+deepnet.platforms.cpu().then((backend) => {
     
     let dn = backend;
 
@@ -47,13 +43,13 @@ deepnet.backends.cpu().then((backend) => {
 })
 ```
 
-## CDN
+### CDN
 
 ```html
 <script src="https://unpkg.com/deepnet.js@latest/dist/deepnet-browser.min.js"></script>
 <script>
 
-    deepnet.backends.cpu().then((backend) => {
+    deepnet.platforms.cpu().then((backend) => {
     
         let dn = backend;
 
@@ -72,14 +68,15 @@ deepnet.backends.cpu().then((backend) => {
 ### Table of Contents
 
 * [Autodiff](#Autodiff)
-* [Platforms/Backends](#Platforms/Backends)
+* [Platforms/Backends](#PlatformsBackends)
 * [Tensor](#Tensor)
 * [Vertex - `deprecated`](#Vertex)
 * [Operations](#Operations)
     * [Broadcasting](#Broadcasting)
     * [basic operations](#basic_operation)
     * [Matmul two Tensors](#Matmul_two_Tensors)
-    * [Backpass example](#Backpass_example)
+* [Available_methods](#Available_methods)
+* [Backpass example](#Backpass_example)
 * [fully connected example](#fully_connected_example)
 
 ### Autodiff
@@ -146,6 +143,7 @@ __Contains:__
 
 > :warning: **dn.vertex(..) is deprecated.** Use dn.tensor(..) directly. 
 
+
 ### Operations
 
 #### Broadcasting
@@ -204,6 +202,7 @@ Tensor
   [2 2]]]
 ```
 
+
 ### Available_methods
 
 Available methods under the deepnet.platforms.cpu(..)
@@ -253,6 +252,7 @@ __dn.traversal()__
 
 > :warning: **dn.traversal(..) is deprecated.** Use dn.tensor(..).grad.print() to print specifically.
 
+
 ```js
 deepnet.platforms.cpu().then((dn) => {
     
@@ -282,7 +282,7 @@ vanilla_net();
 
 async function vanilla_net(){
 
-    let dn = await deepnet.backends.cpu();
+    let dn = await deepnet.platforms.cpu();
 
     let input_tensor = dn.tensor([0, 0, 1, 1, 0, 1, 0, 1, 0, 0], [1, 10]);        
     
