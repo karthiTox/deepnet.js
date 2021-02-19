@@ -3,6 +3,7 @@ old/
 src/
 test/
 examples/
+dist_ts/
 
 .babelrc
 .gitignore
