@@ -8,8 +8,8 @@
     "test": "test"
   },
   "scripts": {
-    "test:src": "jest",
-    "test:dist": "jest testing/dist.test.js",
+    "test:src": "jest --config=jest.src.config.js",
+    "test:dist": "jest --config=jest.testing.config.js",
     "build:browser": "rollup -c rollup.config.browser.js",
     "build:node": "rollup -c rollup.config.js",
     "build:test": "rollup -c rollup.config_test.js",
