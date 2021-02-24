@@ -1,8 +1,13 @@
 # deepnet.js
 
+![unit test](https://github.com/karthitox/deepnet.js/actions/workflows/test.yml/badge.svg?branch=master)
+![npm](https://github.com/karthitox/deepnet.js/actions/workflows/test.yml/publish.svg?branch=master)
+
 <img src="logo.png" width=250 heigth=250 />
 
 __deepnet.js__ is an auto-differentiation library for javascript. it will compute the gradients in both static and dynamic method.
+
+> you can see the API-doc <a href="https://github.com/karthiTox/deepnet.js/tree/master/doc/API-doc.md">here.</a>
 
 > :warning: **Deepnet.js** is reimplemented from ground to support sparse tensor, broadcast
 > and various backends are in development, If you are using the older versions (1.0.2 or below), 
@@ -65,18 +70,19 @@ deepnet.platforms.cpu().then((backend) => {
 ```
 ## Getting started
 
+## Full API-doc
+
+you can see the API-doc <a href="https://github.com/karthiTox/deepnet.js/tree/master/doc/API-doc.md">here.</a>
+
 ### Table of Contents
 
 * [Autodiff](#Autodiff)
 * [Platforms/Backends](#PlatformsBackends)
 * [Tensor](#Tensor)
-* [Vertex - `deprecated`](#Vertex)
 * [Operations](#Operations)
     * [Broadcasting](#Broadcasting)
     * [basic operations](#basic_operation)
     * [Matmul two Tensors](#Matmul_two_Tensors)
-* [Available_methods](#Available_methods)
-* [Backpass example](#Backpass_example)
 * [fully connected example](#fully_connected_example)
 
 ### Autodiff
@@ -139,11 +145,6 @@ __Contains:__
 
 * __is_sparse__ it is used specify whether the tensor to be created is sparse or dense. default false.
 
-### Vertex
-
-> :warning: **dn.vertex(..) is deprecated.** Use dn.tensor(..) directly. 
-
-
 ### Operations
 
 #### Broadcasting
@@ -203,131 +204,56 @@ Tensor
 ```
 
 
-### Available_methods
-
-Available methods under the deepnet.platforms.cpu(..)
-
-* tensor
-* randn
-* ones
-* zeros
-* fill
-* add
-* sub
-* mul
-* div
-* transpose
-* matmul
-* get_output
-* grad_zero
-* backpass
-* sig
-* relu
-* tanh
-* recp
-
-### Backpass_example
-
-__dn.backpass()__
-
-dn.backpass(..tensor..) will Compute the gradients (derivatives) of the current tensor and 
-adds the computed gradients with the grad (grad_ is initialized with value (0)).
-
-grad must be zero before calling dn.backpass(). The graph which is constructed while the forword operation is differentiated using chain rule. 
-
-__dn.update_loss()__
-
-> :warning: **dn.update_loss(..) is deprecated.** Use dn.optimizer.SGD(..).step() instead.
-
-__dn.grad_zero()__
-
-dn.grad_zero() will Reset the tensor's grad (it will simple set grad to zero). 
-this should be called after dn.optimizer.SGD(..).step().
-
-__dn.detach()__
-
-> :warning: **dn.detach(..) is deprecated.** Automatically detached.
-
-__dn.traversal()__
-
-> :warning: **dn.traversal(..) is deprecated.** Use dn.tensor(..).grad.print() to print specifically.
-
-
-```js
-deepnet.platforms.cpu().then((dn) => {
-    
-    // supports broadcasting
-    const a = dn.ones([1, 2]);
-    const w = dn.ones([2, 2]);
-    const b = dn.ones([1, 2]);
-
-    const optim = dn.optimizer.SGD([w, b], 0.04);
-
-    const mres = dn.matmul(a, w);
-    const result = dn.add(mres, b);
-    
-    dn.backpass(result);
-    optim.step();
-    dn.grad_zero(result);
-
-})
-
-```
-
 ### fully_connected_example
 
 ```js
+const deepnet = require("deepnet.js");
 
-vanilla_net();
+(async () => {  
 
-async function vanilla_net(){
-
+    // importing the "cpu" class
     let dn = await deepnet.platforms.cpu();
 
-    let input_tensor = dn.tensor([0, 0, 1, 1, 0, 1, 0, 1, 0, 0], [1, 10]);        
-    
-    let linear1 = deepnet.nn.Linear(dn, 10, 5);
-    let linear2 = deepnet.nn.Linear(dn, 5, 1);
-    
-    let out1 = linear1(input_tensor);
-    let out2 = dn.sig(out1)
-    let result = dn.sig(linear2(out2)); 
-       
-    let optim = dn.optimizer.SGD([linear1.weights, linear1.biases, linear2.weights, linear2.biases], lr = 0.04);
+    // declaring input
+    let a = dn.tensor([1, 2, 3, 4], [2, 2]);
 
-    for (let i = 0; i < 700; i++) {           
-        // prime no.
-        input_tensor.value.data = [0, 0, 1, 1, 0, 1, 0, 1, 0, 0];
-        dn.get_output(result);
-        dn.backpass(result, dn.tensor(result.value.data.map((v, i)=>v-1),result.value.shape);
-        optim.step();
-        dn.grad_zero(result);
+    // declaring weights
+    let w = dn.randn([2, 2]);
+    let b = dn.randn([2, 2]);
 
-        // !prime no.    
-        input_tensor.value.data = [1, 1, 0, 0, 1, 0, 1, 0, 1, 1];
-        dn.get_output(result);
-        dn.backpass(result, dn.tensor(result.value.data.map((v, i)=>v-0), result.value.shape));                
-        optim.step();
-        dn.grad_zero(result);
+    // single nn layer - (linear layer)
+    // returns sigmoid( a @ w + b )
+    const feed = (a, w, b) => {
+        let mat_res = dn.matmul(a, w);
+        let added = dn.add(mat_res, b);
+        return dn.sig(added);
     }
 
-    input_tensor.value.data = [0, 0, 1, 1, 0, 1, 0, 1, 0, 0];
-    dn.get_output(result);
-    result.value.print();
+    // Stochastic gradient descent optimizer
+    let optm = dn.optimizer.SGD([w, b], 0.04);
     
-    input_tensor.value.data = [1, 1, 0, 0, 1, 0, 1, 0, 1, 1];
-    dn.get_output(result);
-    result.value.print();
+    for (let i = 0; i < 300; i++) {
+        
+        let result = feed(a, w, b);
+        let loss = dn.sub(result, dn.tensor([0, 1, 0, 1], [2, 2]));              
+        
+        dn.backpass(result, loss); // calculating derivatives
+        optm.step(); // updating weights
+        dn.grad_zero(result); // reseting the grad
 
-}
+    }
+
+    // Predicting the values
+    let pred = feed(a, w, b);
+    pred.print();
+
+})();
 
 ```
 
 Output:
 ```
 Tensor
-[[0.9287171535850516]]
-
-Tensor
-[[0.08015744142447224]]
+[[0.08579222069069875 0.905562796140377]
+ [0.005928221665889459 0.9933268076751989]]
 ```

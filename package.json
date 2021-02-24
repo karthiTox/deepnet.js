@@ -8,12 +8,14 @@
     "test": "test"
   },
   "scripts": {
-    "test": "jest",
+    "test:src": "jest",
+    "test:dist": "jest testing/dist.test.js",
     "build:browser": "rollup -c rollup.config.browser.js",
     "build:node": "rollup -c rollup.config.js",
     "build:test": "rollup -c rollup.config_test.js",
     "build": "npm run build:browser && npm run build:node",
-    "build:wasm": "cd scripts && build_wasm.bat && cd .."
+    
+    "gen:api-doc": "node doc/doc_generator.js"
   },
   "repository": {
     "type": "git",

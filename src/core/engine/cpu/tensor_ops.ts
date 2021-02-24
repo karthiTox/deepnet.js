@@ -22,33 +22,9 @@ export class Tensor<m_arr>{
 
 
 /**
- * # deepnet.js
+ * # deepnet.js API-doc
  * deepnet.js is an auto-differentiation library for javascript. it will compute the gradients in both static and dynamic method.
  */
-
-
-/**
- * ## Autodiff
- * Autodiff (Automatic Differentitation) is a technique which uses a computational graph to compute a derivatives automatically.
-
- * In the forward phase, it executes the math operation and constructs the computational graph, and In the backward phase, the dervatives are computed automatically.
-
- * ## Platforms/Backends
- * Platforms adds support for various environments to run your neural networks.
-
- * cpu(..), (js-environment) pure js implementaion for the browser and nodejs.
- * ```js
- * const deepnet  = require("deepnet.js");
- * deepnet.platforms.cpu().then((dn) => { 
- *        
- *  dn.tensor(..)
- *  dn.add(..)
- *  ...    
- * 
- * }); 
- * ```
- */
-
  
  /**
   * ## Basic

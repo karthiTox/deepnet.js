@@ -1,4 +1,4 @@
-import { nArray } from "./array";
+import { nArray } from "./Array";
 
 
 export class util {
@@ -173,7 +173,7 @@ export class ops
         
         let res = new Array(original_shape.reduce((a, b)=>a*b)).fill(0);
         
-        a.data.forEach((d, i) => {
+        a.data.forEach((d:number, i:number) => {
             let a_index = util.find_index(a.shape, a_step, i);
             let o_index:number[] = [];
             a_index.forEach((ai, i) => {
