@@ -20,6 +20,7 @@ jobs:
       - run: npm run test:src
       - run: npm run build
       - run: npm run test:dist
-      - run: npm publish --access public
+      - name: npm-publish
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  
