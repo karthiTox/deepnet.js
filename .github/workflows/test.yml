@@ -17,4 +17,5 @@ jobs:
         with:
             node-version: 10
       - name: test
+        run: npm ci
         run: npm run test        
