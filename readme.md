@@ -1,7 +1,7 @@
 # deepnet.js
 
-![unit test](https://github.com/karthitox/deepnet.js/actions/workflows/test.yml/badge.svg?branch=master)
-![npm](https://github.com/karthitox/deepnet.js/actions/workflows/test.yml/publish.svg?branch=master)
+![unit test](https://github.com/karthitox/deepnet.js/actions/workflows/test.yml/badge.svg)
+![npm](https://github.com/karthitox/deepnet.js/actions/workflows/publish.yml/badge.svg)
 
 <img src="logo.png" width=250 heigth=250 />
 
