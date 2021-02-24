@@ -30,7 +30,16 @@ export class nArray<m_arr>{
     } 
 
     get_data(i:number){
-        return this.data[i];
+        if (this.is_sparse) {
+            let di = this.index.indexOf(i);
+
+            if(di != -1)
+                return this.data[di];
+            else 
+                return 0;
+        }
+        else 
+            return this.data[i];
     }
 
     get_index(i:number){

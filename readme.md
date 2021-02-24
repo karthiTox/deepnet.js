@@ -1,6 +1,6 @@
-## deepnet.js
+# deepnet.js
 
-<img src="logo.png" width="220" height="220" />
+<img src="logo.png" width=250 heigth=250 />
 
 __deepnet.js__ is an auto-differentiation library for javascript. it will compute the gradients in both static and dynamic method.
 

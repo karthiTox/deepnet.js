@@ -13,7 +13,7 @@
     "build:node": "rollup -c rollup.config.js",
     "build:test": "rollup -c rollup.config_test.js",
     "build": "npm run build:browser && npm run build:node",
-    "build:wasm": "cd scripts && build_wasm.bat && cd .."    
+    "build:wasm": "cd scripts && build_wasm.bat && cd .."
   },
   "repository": {
     "type": "git",
@@ -36,6 +36,7 @@
     "@types/jest": "^26.0.14",
     "assemblyscript": "^0.17.2",
     "babel-loader": "^8.1.0",
+    "comment-parser": "^1.1.2",
     "jest": "^26.5.3",
     "rollup": "^2.33.1",
     "rollup-plugin-babel": "^4.4.0",
