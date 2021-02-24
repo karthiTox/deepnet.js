@@ -1,4 +1,4 @@
-import { nArray } from "./array";
+import { nArray } from "./Array";
 
 
 export class util {
@@ -131,109 +131,40 @@ export class ops
         }                
 
         return [s1, s2, res];
-    }
-
-    static basic <arr>( a:nArray<arr>, b:nArray<arr>, result:nArray<arr>, op_type:Basic_types = Basic_types.add ) {        
-        if (op_type == this.basic_types.sub) {
-            let n = new nArray(b.data, b.shape, b.is_sparse);
-            for (let i = 0; i < n.data.length; i++) {
-                n.data[i] *= -1;                
-            }
-            b = n;
-            op_type = this.basic_types.add;
-        }
-        
-        if (a.shape.reduce((n1, n2) => n1 * n2) > b.shape.reduce((n1, n2) => n1 * n2)) {            
-            return this.basic_main(a, b, result, op_type);
-        } else {
-            return this.basic_main(b, a, result, op_type);
-        }        
-    }
+    }    
     
-    static basic_main<arr>( a:nArray<arr>, b:nArray<arr>, result:nArray<arr>, op_type:Basic_types){                        
+    static basic<arr>( a:nArray<arr>, b:nArray<arr>, result:nArray<arr>, op_type:Basic_types){                        
         let [a_shape, b_shape, res_shape] = this.broadcast_dim(a.shape, b.shape);       
         let [a_step, b_step, res_step] = [a_shape, b_shape, res_shape].map(v => util.cal_step(v));
-        let size = res_shape.reduce((a, b) => a*b);
-
-
-        if(a.is_sparse == true || b.is_sparse == true)
-        {               
-            let apos = 0, bpos = 0, rpos = 0;
-            let li = -1;
-
-            while(apos < a.data.length)
-            {          
-                bpos %= b.data.length;                
-                let aindex = util.find_index(res_shape, res_step, a.get_index(apos))
-                let bindex = util.find_index(res_shape, res_step, b.get_index(bpos))
-                let rindex = aindex.map((a, b) => Math.max(a, bindex[b]))
-                
-                aindex = aindex.map((v,i) => v%b_shape[i]);
-                bindex = bindex.map((v,i) => v%a_shape[i]);
-
-                let ai = util.cal_index(aindex, b_step);
-                let bi = util.cal_index(bindex, a_step);
-                let ri = util.cal_index(rindex, res_step);                           
-                
-                if(ai < bi)
-                {  
-                    apos++;
-                }
-                else if(ai > bi)
-                {    
-                    bpos++;                   
-                }
-                else
-                {
-                    if (li+1 < ri) {
-                        for (let i = li+1; i < ri; i++) {                            
-                            let i_in_res = util.find_index(res_shape, res_step, i);
-                            let i_in_b = util.cal_index(i_in_res.map((v, i) => v%b_shape[i]), b_step);
-                            result.data[rpos] = b.data[i_in_b];
-                            result.index[rpos] = i;                            
-                            rpos++;
-                        }
-                    }
-                    
-                    result.data[rpos] = this.basic_op( a.data[apos], b.data[bpos], op_type );
-                    result.index[rpos] = ri;                    
-                    li = ri;
-
-                    rpos++;                
-                    apos++;
-                    bpos++;
-                }
-
-            }        
-
-            if (li < size) {
-                for (let i = li+1; i < size; i++) {                            
-                    let i_in_res = util.find_index(res_shape, res_step, i);
-                    let i_in_b = util.cal_index(i_in_res.map((v, i) => v%b_shape[i]), b_step);
-                    result.data[rpos] = b.data[i_in_b];
-                    result.index[rpos] = i;                            
-                    rpos++;
-                }
-            }
-
-            return result;
-
-        } else {  
+        let size = res_shape.reduce((a, b) => a * b);
+        
+        for (let d = 0; d < size; d++)
+        {
+            let res_index = util.find_index(res_shape, a_step, d)
+            let aindex = res_index.map((r,i) => r%a_shape[i]);
+            let bindex = res_index.map((r,i) => r%b_shape[i]);
+            let ai = util.cal_index(aindex, a_step);
+            let bi = util.cal_index(bindex, b_step);
             
-            for (let d = 0; d < size; d++)
-            {
-                let res_index = util.find_index(res_shape, a_step, d)
-                let aindex = res_index.map((r,i) => r%a_shape[i]);
-                let bindex = res_index.map((r,i) => r%b_shape[i]);
-                let ai = util.cal_index(aindex, a_step);
-                let bi = util.cal_index(bindex, b_step);
-                
-                result.data[d] = this.basic_op( a.data[ai], b.data[bi], op_type );
-            };
-        
-            return result;
-        }                       
-        
+            let res = this.basic_op( a.get_data(ai), b.get_data(bi), op_type );
+
+            if (a.is_sparse || b.is_sparse) {
+                if (res != 0) {
+                    result.data.push(res);
+                    result.index.push(d);
+                }
+            } else {
+                result.data[d] = res;
+            }
+        };
+    
+        if (a.is_sparse || b.is_sparse) {
+            result.is_sparse = true;
+        }
+
+        result.shape = res_shape;
+        return result;                     
+                            
     }
     
     static unbroadcast<arr>(a:nArray<arr>, original_shape:number[]){ 
@@ -242,7 +173,7 @@ export class ops
         
         let res = new Array(original_shape.reduce((a, b)=>a*b)).fill(0);
         
-        a.data.forEach((d, i) => {
+        a.data.forEach((d:number, i:number) => {
             let a_index = util.find_index(a.shape, a_step, i);
             let o_index:number[] = [];
             a_index.forEach((ai, i) => {
@@ -500,7 +431,8 @@ export class ops
                 }
 
             }
-
+            
+            res.shape = n_res_shape;
             return res;
         }
         else
@@ -571,7 +503,7 @@ export class ops
     static applyfn<arr> (a:nArray<arr>, res:nArray<arr>,fn:(...a:number[])=>number) {
         for (let d = 0; d < a.data.length; d++) {
             res.data[d] = fn(a.data[d]);
-            if (res.is_sparse) if (a.index[d]) res.index[d] = a.index[d];                 
+            if (res.is_sparse) res.index[d] = a.index[d];                 
         }        
         return res;
     }
@@ -591,10 +523,23 @@ export class ops
 
 // console.log("start")
 // console.time("start")
-// let a = new nArray([1, 2, 0, 0, 5, 6, 0, 0], [2, 2, 2], false);
-// let b = new nArray([1, 2, 3, 4], [2, 2], false);
-// let r = new nArray([], [2, 2, 2], false)
-// ops.basic_main(    
+// let a = new nArray([1, 0, 3, 4, 5, 0, 0, 0], [2, 2, 2], true);
+// let b = new nArray([1, 0, 3, 4], [2, 2], true);
+// let r = new nArray([], [2, 2], true)
+// ops.basic(    
+//     a,
+//     b,
+//     r,  
+//     ops.basic_types.sub 
+// )
+// r.print();
+// console.timeEnd("start")
+
+// console.time("start")
+// a = new nArray([1, 2], [1, 2], false);
+// b = new nArray([1, 1], [2, 1], false);
+// r = new nArray([], [2, 2], false)
+// ops.basic(    
 //     a,
 //     b,
 //     r,  

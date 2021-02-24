@@ -21,9 +21,51 @@ export class Tensor<m_arr>{
 }
 
 
+/**
+ * # deepnet.js API-doc
+ * deepnet.js is an auto-differentiation library for javascript. it will compute the gradients in both static and dynamic method.
+ */
+ 
+ /**
+  * ## Basic
+  * 
+  * deepnet.platforms.cpu() returns a promise which resolves and returns a class (cpu) which contains all the methods to perform the tensor operations
+  * 
+  * ```js
+  * const deepnet  = require("deepnet.js");
+  * 
+  * deepnet.platforms.cpu().then((dn) => {
+  *  
+  *  dn.tensor(..)
+  *  dn.add(..)
+  *  ...
+  * 
+  * }); 
+  * ```
+  */
+
+
+
 export class ops_cpu{
     public Tensor_type = Tensor;
 
+    /**
+     * A tensor is a scalar or a vector or a multidimensional array.     
+     * 
+     * @param {array} array Initial value for the tensor, Array of numbers.
+     * @param {array} shape The shape of the tensor. if it is not defined, it will be automatically found from data
+     * @param {boolean} is_sparse it is used specify whether the tensor to be created is sparse or dense. default false.
+     * 
+     * 
+     *  ```js
+     * let dense = dn.tensor([1, 2, 3, 4], [2, 2], is_sparse = false);    
+     * dense.print();
+     * 
+     * let sparse = dn.tensor([1, 2, 0, 4, 5, 6, 0, 0], [2, 2, 2], is_sparse = true);    
+     * sparse.print();
+     * ```
+     * 
+     */
     tensor<arr>(array:arr, shape?:number[]|null, is_sparse:boolean = false){
         return new Tensor(array, shape, is_sparse);
     }
@@ -33,6 +75,20 @@ export class ops_cpu{
         return tot;
     }
 
+    /**
+     * It creates a tensor filled with random numbers from a given shape.
+     * A tensor is a scalar or a vector or a multidimensional array.
+     *
+     * @param {array} shape The shape of the tensor. if it is not defined, it will be automatically found from data
+     * @param {boolean} is_sparse it is used specify whether the tensor to be created is sparse or dense. default false.
+     * 
+     * 
+     *  ```js
+     * let a = dn.randn([2, 2], is_sparse = false);    
+     * a.print();
+     * ```
+     * 
+     */
     randn(shape:number[], is_sparse:boolean = false){
         let tot = this.find_tot(shape);
         let res = [];
@@ -42,11 +98,40 @@ export class ops_cpu{
         return this.tensor(res, shape, is_sparse);
     }
 
+    /**
+     * It creates a tensor filled with ones from a given shape.
+     * A tensor is a scalar or a vector or a multidimensional array.     
+     * 
+     * @param {array} shape The shape of the tensor. if it is not defined, it will be automatically found from data
+     * @param {boolean} is_sparse it is used specify whether the tensor to be created is sparse or dense. default false.
+     * 
+     * 
+     *  ```js
+     * let a = dn.ones([2, 2], is_sparse = false);    
+     * a.print();
+     * ```
+     * 
+     */
     ones(shape:number[], is_sparse:boolean = false) {
         let tot = this.find_tot(shape);
         return this.tensor(new Array(tot).fill(1), shape, is_sparse);
     }
 
+    /**
+     * 
+     * It creates a tensor filled with zeros from a given shape.
+     * A tensor is a scalar or a vector or a multidimensional array.     
+     * 
+     * @param {array} shape The shape of the tensor. if it is not defined, it will be automatically found from data
+     * @param {boolean} is_sparse it is used specify whether the tensor to be created is sparse or dense. default false.
+     * 
+     * 
+     *  ```js
+     * let a = dn.zeros([2, 2], is_sparse = false);    
+     * a.print();
+     * ```
+     * 
+     */
     zeros(shape:number[], is_sparse:boolean = false) {
         if(!is_sparse) {
             let tot = this.find_tot(shape);
@@ -56,12 +141,41 @@ export class ops_cpu{
         }
     }
     
+    /**
+     * It creates a tensor filled with a given value.
+     * A tensor is a scalar or a vector or a multidimensional array.     
+     * 
+     * @param {array} shape The shape of the tensor. if it is not defined, it will be automatically found from data
+     * @param {number} value The value to be filled
+     * @param {boolean} is_sparse it is used specify whether the tensor to be created is sparse or dense. default false.
+     * 
+     * 
+     *  ```js
+     * let a = dn.fill([2, 2], 5, is_sparse = false);    
+     * a.print();
+     * ```
+     */
     fill(shape:number[], value:number, is_sparse:boolean = false) {
         let tot = this.find_tot(shape);
         return this.tensor(new Array(tot).fill(value), shape, is_sparse);
     }
 
-    add<arr>(a:Tensor<arr>, b:Tensor<arr>){
+    /**
+     * Adds two Tensors element-wise, Supports broadcasting and sparse.
+     * 
+     * @param {Tensor} a The first Tensor
+     * @param {Tensor} b The second Tensor
+     * 
+     * ```js
+     * let a = dn.fill([2, 2], 5, is_sparse = false);    
+     * let b = dn.fill([2, 2], 4, is_sparse = false);    
+     * 
+     * let result = dn.add(a, b);
+     * 
+     * result.print();
+     * ```
+     */
+     add<arr>(a:Tensor<arr>, b:Tensor<arr>){
         let res = new Tensor(new Array(a.value.data.length).fill(0), a.value.shape, a.value.is_sparse);
         
         res.parents = [a, b];
@@ -87,6 +201,21 @@ export class ops_cpu{
         return res;
     }
 
+    /**
+     * Subtracts two Tensors element-wise, Supports broadcasting and sparse.
+     * 
+     * @param {Tensor} a The first Tensor
+     * @param {Tensor} b The second Tensor
+     * 
+     * ```js
+     * let a = dn.fill([2, 2], 5, is_sparse = false);    
+     * let b = dn.fill([2, 2], 4, is_sparse = false);    
+     * 
+     * let result = dn.sub(a, b);
+     * 
+     * result.print();
+     * ```
+     */
     sub<arr>(a:Tensor<arr>, b:Tensor<arr>){
         let res = new Tensor(new Array(a.value.data.length).fill(0), a.value.shape, a.value.is_sparse);
         
@@ -113,6 +242,21 @@ export class ops_cpu{
         return res;
     }
 
+    /**
+     * Multiplies two Tensors element-wise, Supports broadcasting and sparse.
+     * 
+     * @param {Tensor} a The first Tensor
+     * @param {Tensor} b The second Tensor
+     * 
+     * ```js
+     * let a = dn.fill([2, 2], 5, is_sparse = false);    
+     * let b = dn.fill([2, 2], 4, is_sparse = false);    
+     * 
+     * let result = dn.mul(a, b);
+     * 
+     * result.print();
+     * ```
+     */
     mul<arr>(a:Tensor<arr>, b:Tensor<arr>){
         let res = new Tensor(new Array(a.value.data.length).fill(0), a.value.shape, a.value.is_sparse);
         
@@ -143,11 +287,40 @@ export class ops_cpu{
         return res;
     }
 
+    /**
+     * Divides  two Tensors element-wise, Supports broadcasting and sparse.
+     * 
+     * @param {Tensor} a The first Tensor
+     * @param {Tensor} b The second Tensor
+     * 
+     * ```js
+     * let a = dn.fill([2, 2], 5, is_sparse = false);    
+     * let b = dn.fill([2, 2], 4, is_sparse = false);    
+     * 
+     * let result = dn.div(a, b);
+     * 
+     * result.print();
+     * ```
+     */
     div<arr> (a:Tensor<arr>, b:Tensor<arr>) {        
         let bi = this.recp(b);
         return this.mul(a, bi);
     }
 
+    /**
+     * Transposes the Tensor.
+     * shift the axis according to the given dimension
+     * 
+     * @param {Tensor} a The Tensor to Transpose
+     * @param {number_array} dimension dimension to shift
+     * 
+     * ```js
+     * let a = dn.tensor([1, 2, 3, 4], [2, 2]);    
+     * let result = dn.transpose(a, [1, 0]);
+     * 
+     * result.print();
+     * ```
+     */
     transpose<arr> (a:Tensor<arr>, dimension?:number[]) {
         let dim = dimension ? dimension : a.value.shape.map((v, i)=>a.value.shape.length-1-i);
         
@@ -175,6 +348,21 @@ export class ops_cpu{
         return res;
     }
 
+    /**
+     * Computes the matrix multipication of two tensors.
+     * 
+     * @param {Tensor} a The first Tensor
+     * @param {Tensor} b The second Tensor
+     * 
+     * ```js
+     * let a = dn.tensor([1, 2, 3, 4], [2, 2]);      
+     * let b = dn.tensor([1, 2, 3, 4], [2, 2]);      
+     * 
+     * let result = dn.matmul(a, b);
+     * 
+     * result.print();
+     * ```
+     */
     matmul<arr> (a:Tensor<arr>, b:Tensor<arr>) {
         let res_size = 1;
         let res_shape = [];
@@ -232,18 +420,61 @@ export class ops_cpu{
         return res;
     };
 
-    get_output<arr>(s:Tensor<arr>|null) {               
+    private backpass_main<arr>(s:Tensor<arr>|null) {        
         if(!s) return;
-
+        
+        s.back();        
+    
         for (let p = 0; p < s.parents.length; p++) {
-            this.get_output(s.parents[p]);
+            this.backpass_main(s.parents[p]);
         }
-
-        s.feed();
-
-        return s;
     }
+    
+    /**
+    * This will Compute the gradient (derivatives) of the current vertex's tensor (tensor_) and 
+    * adds the results with grad_ (grad_ is initialized with value (0)).
+    * 
+    * grad_ must be zero before calling it.
+    * 
+    * The graph which is constructed while the forword operation is differentiated using chain rule. 
+    *
+    * @param {Tensor} s Resultant vertex or Starting vertex.
+    * @param {Tensor} initial_grad Initial grad or derivative to start with.
+    * 
+    *```js
+    * let a = dn.tensor([1, 2, 3, 4], [2, 2]);
+    * let w = dn.randn([2, 2]);    
+    * let result = dn.mul(a, w)
+    * 
+    * dn.backpass(result); // <<<
+    * ```
+    */
+    backpass<arr>(s:Tensor<arr>, initial_grad?:Tensor<arr>) {
+        if(initial_grad) {
+            s.grad.data = initial_grad.value.data;            
+        }else{
+            s.grad.data = s.grad.data.map(v=>1);        
+        }
+    
+        this.backpass_main(s);
+    } 
 
+
+    /**
+    * This will Reset the grad (grad_).
+    * this should be called after update_loss.
+    * 
+    * @param {Tensor} s Resultant vertex or Starting vertex.
+    * 
+    * ```js
+    * let a = dn.tensor([1, 2, 3, 4], [2, 2]);
+    * let w = dn.randn([2, 2]);    
+    * let result = dn.mul(a, w)
+    * 
+    * dn.backpass(result);
+    * dn.grad_zero(result); // <<< used after backpass
+    * ```
+    */
     grad_zero<arr>(s:Tensor<arr>|null) {               
         if(!s) return;
 
@@ -254,26 +485,46 @@ export class ops_cpu{
         }
     }
 
-    private backpass_main<arr>(s:Tensor<arr>|null) {        
+    /**
+     * This will recalculate the forword propogation.
+     * 
+     * @param s  Resultant vertex or Starting vertex.
+     * 
+     * ```js
+     * let a = dn.tensor([1, 2, 3, 4], [2, 2]);
+     * let w = dn.randn([2, 2]);    
+     * let result = dn.mul(a, w)
+     *
+     * dn.backpass(result); 
+     * dn.get_output(result) // <<< this will recalculate 
+     * ```
+     */
+    get_output<arr>(s:Tensor<arr>|null) {               
         if(!s) return;
-        
-        s.back();        
 
         for (let p = 0; p < s.parents.length; p++) {
-            this.backpass_main(s.parents[p]);
-        }
-    }
-
-    backpass<arr>(s:Tensor<arr>, res?:Tensor<arr>) {
-        if(res) {
-            s.grad.data = res.value.data;            
-        }else{
-            s.grad.data = s.grad.data.map(v=>1);        
+            this.get_output(s.parents[p]);
         }
 
-        this.backpass_main(s);
-    }    
+        s.feed();
 
+        return s;
+    } 
+
+    /**
+     * ## Activations
+     */
+
+    /**
+     * Computes sigmoid activation element-wise
+     * @param {Tensor} a The tensor to apply a function.
+     * 
+     * ```js
+     * let a = dn.tensor([1, 2, 3, 4], [2, 2]);
+     * let result = dn.sig(a);
+     * result.print();
+     * ``` 
+     */
     sig<arr>(a:Tensor<arr>) {                
         return this.applyfn(
             a,
@@ -286,7 +537,16 @@ export class ops_cpu{
         );
     }
 
-     
+    /**
+     * Computes Relu activation element-wise
+     * @param {Tensor} a The tensor to apply a function.
+     * 
+     * ```js
+     * let a = dn.tensor([1, 2, 3, 4], [2, 2]);
+     * let result = dn.relu(a);
+     * result.print();
+     * ``` 
+     */
     relu<arr>(a:Tensor<arr>) {        
         return this.applyfn(
             a, 
@@ -313,6 +573,16 @@ export class ops_cpu{
         );
     }
      
+    /**
+     * Computes tanh activation element-wise
+     * @param {Tensor} a The tensor to apply a function.
+     * 
+     * ```js
+     * let a = dn.tensor([1, 2, 3, 4], [2, 2]);
+     * let result = dn.tanh(a);
+     * result.print();
+     * ``` 
+     */
     tanh<arr>(a:Tensor<arr>) {        
         return this.applyfn(
             a, 
@@ -327,7 +597,16 @@ export class ops_cpu{
         );
     }
 
-
+    /**
+     * Computes reciprocal of the tensor.
+     * @param {Tensor} a The tensor to apply a function.
+     * 
+     * ```js
+     * let a = dn.tensor([1, 2, 3, 4], [2, 2]);
+     * let result = dn.recp(a);
+     * result.print();
+     * ``` 
+     */
     recp<arr> (a:Tensor<arr>){
         return this.applyfn(
             a, 
@@ -363,9 +642,30 @@ export class ops_cpu{
         return res;
     }
 
-
+    
     public optimizer = {
-
+        
+        /**    
+         * ## SGD
+         *       
+         * Constructs an Optimizer that uses (SGD) stochastic gradient descent.         
+         * @param {Tensor_array} parameters Paremeters to update.
+         * @param {number} lr The learning rate for the SGD.
+         * 
+         * ```js
+         * let a = dn.tensor([1, 2, 3, 4], [2, 2]);
+         * let w = dn.randn([2, 2]);
+         * let b = dn.randn([2, 2]);
+    
+         * let optm = dn.optimizer.SGD([w, b], 0.04); //<<
+         * let result = dn.add(dn.matmul(a, w), b)
+         * let loss = dn.sub(result, dn.tensor([0, 1, 0, 1], [2, 2]));              
+        
+         * dn.backpass(result, loss);
+         * optm.step(); //<<
+         * dn.grad_zero(result);
+         * ```
+         */
         SGD:<arr>(parameters:Tensor<arr>[], lr:number) => {
             return new SGD(parameters, lr);
         }

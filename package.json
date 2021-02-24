@@ -1,6 +1,6 @@
 {
   "name": "deepnet.js",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Auto-differentiation library for javascript",
   "main": "dist_node/deepnet.main.js",
   "module": "dist_node/deepnet.mod.js",
@@ -8,12 +8,14 @@
     "test": "test"
   },
   "scripts": {
-    "test": "jest",
+    "test:src": "jest --config=jest.src.config.js",
+    "test:dist": "jest --config=jest.testing.config.js",
     "build:browser": "rollup -c rollup.config.browser.js",
     "build:node": "rollup -c rollup.config.js",
     "build:test": "rollup -c rollup.config_test.js",
     "build": "npm run build:browser && npm run build:node",
-    "build:wasm": "cd scripts && build_wasm.bat && cd .."    
+    
+    "gen:api-doc": "node doc/doc_generator.js"
   },
   "repository": {
     "type": "git",
@@ -36,6 +38,7 @@
     "@types/jest": "^26.0.14",
     "assemblyscript": "^0.17.2",
     "babel-loader": "^8.1.0",
+    "comment-parser": "^1.1.2",
     "jest": "^26.5.3",
     "rollup": "^2.33.1",
     "rollup-plugin-babel": "^4.4.0",
