@@ -59,3 +59,44 @@ test("transpose - tensor-cpu", ()=>{
     expect(r.value.data).toStrictEqual([1, 3, 2, 4]);    
 
 })
+
+
+test("split - tensor-cpu", ()=>{
+    let a = ops.tensor([
+        [1, 2, 3, 4],
+        [1, 2, 3, 4],
+    ]);
+    
+    // dense
+    let r = ops.split(a, 1, [1/4, 2/4, 1/4]);
+    expect(r[0].value.data).toStrictEqual([1, 1]);    
+    expect(r[1].value.data).toStrictEqual([2, 3, 2, 3]);    
+    expect(r[2].value.data).toStrictEqual([4, 4]);       
+
+})
+
+
+test("concat - tensor-cpu", ()=>{
+    let a = ops.tensor([
+        [1, 1],
+        [1, 1]
+    ]);
+
+    let b = ops.tensor([
+        [2],
+        [2]
+    ])
+
+    let c = ops.tensor([
+        [3, 3, 3],
+        [3, 3, 3]
+    ])
+    
+    // dense
+    let r = ops.concat([a, b, c], 1);
+    expect(r.value.data).toStrictEqual([1, 1, 2, 3, 3, 3, 1, 1, 2, 3, 3, 3]); 
+    
+    r = ops.concat([a, c, b], 1);
+    expect(r.value.data).toStrictEqual([1, 1, 3, 3, 3, 2, 1, 1, 3, 3, 3, 2]); 
+
+})

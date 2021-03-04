@@ -32,8 +32,12 @@ function parse(str = "") {
 
     value.forEach((v, i) => {
         
-        let name = v.match(/( |[.]|var[ ]|let[ ]|const[ ])((\w+\s*)|(\w+\s*(=|:)\s*))({|[(]|<)/g);
-        name = clean(name);
+        let name = v.match(/\w+([<]\w+[>])*[(]/g);
+        if(Array.isArray(name)) {
+            name = name[0];    
+            name = name.search(/[<]\w+[>]/g) != -1 ? v.split('<')[0] : name;
+        }        
+        name = clean(name);  
         let type = '';
 
         if (v.search(/class/g) != -1) {

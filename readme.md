@@ -68,6 +68,17 @@ deepnet.platforms.cpu().then((backend) => {
 
 </script>
 ```
+---
+## Support 🔥
+
+If this package helps you, please consider supporting me. Your donation will inspire me to work on this project.
+
+<a href="https://www.paypal.com/paypalme/karthitox">paypal.me</a>
+
+Thanks for considering to donate.
+
+---
+
 ## Getting started
 
 ## Full API-doc

@@ -168,7 +168,7 @@ export class ops
     }
     
     static unbroadcast<arr>(a:nArray<arr>, original_shape:number[]){ 
-        let [a_shape, o_shape] = this.match_dim(a.shape, original_shape);
+        let [a_shape, o_shape] = this.broadcast_dim(a.shape, original_shape);
         let [a_step, o_step] = [util.cal_step(a.shape), util.cal_step(o_shape)];
         
         let res = new Array(original_shape.reduce((a, b)=>a*b)).fill(0);
@@ -188,37 +188,310 @@ export class ops
     }
     
     
-    static reduce_sum<arr>(a:nArray<arr>, axis:number){
-        const a_splited = this.split_till(a.data, a.shape, axis);
-        let res = new Array(a_splited[0].length).fill(0);
-        for (let i = 0; i < a_splited.length; i++) {
-            a_splited[i].forEach((v, i) => {
-                res[i] += v;
-            })
-        }        
+    // static reduce_sum<arr>(a:nArray<arr>, axis:number){
+    //     const a_splited = this.split_till(a.data, a.shape, axis);
+    //     let res = new Array(a_splited[0].length).fill(0);
+    //     for (let i = 0; i < a_splited.length; i++) {
+    //         a_splited[i].forEach((v, i) => {
+    //             res[i] += v;
+    //         })
+    //     }        
 
-        return new nArray(res, a.shape.slice(axis), a.is_sparse);
-    }
+    //     return new nArray(res, a.shape.slice(axis), a.is_sparse);
+    // }
 
-
-    static split_till(val:number[], shape:number[], axis:number){
-        
-        let a_shape = shape.slice(axis);
+    static split_till<arr>(a:nArray<arr>, axis:number) {
+            
+        let a_shape = a.shape.slice(axis);
 
         let tot_el = a_shape.length != 0 ? a_shape.reduce((a, b) => a * b) : 1;
 
-        const res = [];
-        for (let i = 0; i < val.length / tot_el; i++) {           
-            res.push(
-                val.slice(i * tot_el, i * tot_el + tot_el)
-            )                                
+
+        let res:number[][] = [];
+        let index:number[][] = [];
+
+        const size = a.is_sparse ? a.index.length : a.data.length;
+        for (let d = 0; d < size; d++) {
+            const i = a.get_index(d);
+            const data = a.data[d];                
+
+            let pos = Math.floor(i/tot_el);
+            
+            if(!Array.isArray(res[pos])) res[pos] = [];
+
+            res[pos].push(data);
+            
+            if(a.is_sparse) {
+                if( !Array.isArray(index[pos]) ) index[pos] = [];
+
+                index[pos].push(i);
+            }
         }
-        return res;
+
+        res = res.filter((v) => {
+            if(v) return v;
+        })
+
+        index = index.filter((v) => {
+            if(v) return v;
+        })
+
+        return [res, index];
+        
+    }
+
+    static concat <arr> (ar:nArray<arr>[], r:nArray<arr>, axis:number, rewrite:boolean=true) {        
+        if(ar.length < 2) {
+            throw new Error(`concat - Array length should not be less than 2`)
+        }
+
+        for (let a = 1; a < ar.length; a++) {            
+            const nA = ar[a];
+
+            nA.shape.forEach((s, i) => {
+                if(i != axis && s != ar[0].shape[i])                 
+                    throw new Error("Except the axis you given, all other axis should have the same length (size)");                
+            })
+        }
+
+        const shape = Array.from(ar[0].shape);
+        for (let i = 1; i < ar.length; i++) {
+            shape[axis] += ar[i].shape[axis];
+        }
+        const step = util.cal_step(shape);
+        
+        const res = r.data;
+        const res_index = r.index;
+
+        if(rewrite) {
+            res.length = 0;
+            res_index.length = 0;
+        }
+
+        r.is_sparse = ar[0].is_sparse;
+        ar.forEach((a) => {
+            r.is_sparse ||= a.is_sparse;
+        })
+
+        let prev_size = 0;
+        for (let a = 0; a < ar.length; a++) {            
+            let nArray = ar[a];        
+
+            for (let d = 0; d < nArray.data.length; d++) {
+                const index = nArray.get_index(d);
+                const data = nArray.data[d];
+                
+                const f_index = util.find_index(nArray.shape, util.cal_step(nArray.shape), index);
+
+                f_index[axis] += prev_size;
+
+                const n_index = util.cal_index(f_index, step);
+
+                if(!r.is_sparse){
+                    if(rewrite)                    
+                        res[n_index] = data;                                                               
+                    else
+                        res[n_index] += data;
+                }
+                else {
+                    let j:number = res_index.length;
+                    res[j] = data;
+                    res_index[j] = n_index;
+
+                    while (j > 0 && res_index[j - 1] > res_index[j])
+                    {
+                        // swaping index
+                        let t;
+                        t = res_index[j];
+                        res_index[j] = res_index[j - 1];
+                        res_index[j - 1] = t;
+                    
+                        // swaping data
+                        t = res[j];
+                        res[j] = res[j - 1];
+                        res[j - 1] = t;
+                    
+                        j--;
+                    }
+                    
+                    if (j > 0 && res_index[j - 1] == res_index[j]) {
+                        if(!rewrite) res[j] = res[j - 1] + res[j];                        
+                        res_index.splice(j-1, 1);
+                        res.splice(j-1, 1);                        
+                    }
+                }
+            }
+
+            prev_size += nArray.shape[axis];
+        }
+        
+        r.shape = shape;  
+
+        return r;
+    }
+
+    static split <arr>(a:nArray<arr>, r:nArray<arr>[], axis:number, ratio:number[], rewrite:boolean = true){        
+        const t = ratio.reduce((a, b) => a+b);
+        if(t != 1) {
+            throw new Error(`sum of ratios should be one.\nshape: [${a.shape}]\nsize of axis(${axis}): ${a.shape[axis]}\nsum of ratios:[x1/${a.shape[axis]}, x1/${a.shape[axis]}, ...]\nrecived:[${ratio}]`);                    
+        }
+
+        if(rewrite) {
+            r.forEach(ri =>{ 
+                ri.data.length = 0;
+                ri.index.length = 0;
+            })
+        }
+
+        for (let d = 0; d < a.data.length; d++) {
+            const index = a.get_index(d);
+            const data = a.data[d];
+            
+            let full_index = util.find_index(a.shape, util.cal_step(a.shape), index);
+            let [group, n_index] = this.find_group(full_index[axis], ratio, a.shape[axis]);
+            
+            full_index[axis] = n_index;
+
+            const shape = Array.from(a.shape);
+            shape[axis] *= ratio[group];
+            shape[axis] = Math.floor(shape[axis]);
+            
+            const new_index = util.cal_index(full_index, util.cal_step(shape));
+
+            if (rewrite) {
+
+                r[group].data.push(data);
+                if (a.is_sparse) {
+                    r[group].index.push(new_index);
+                }
+
+            } else {
+                if (!a.is_sparse) {
+
+                    if (r[group].data[new_index] != undefined) {
+                        r[group].data[new_index] += data;
+                    } else {
+                        r[group].data.push(data);
+                    }
+
+                } else {
+                    let id = r[group].index.indexOf(new_index);
+                    if (id != -1) {
+                        r[group].data[id] += data;                    
+                    } else {
+                        r[group].data.push(data);
+                        r[group].index.push(new_index);
+                    }
+                }
+            }
+
+            r[group].is_sparse = a.is_sparse;
+            r[group].shape = shape;
+        }
+    }
+
+    /**
+     * 
+     * @param i index
+     * @param ratio ratio[]
+     * @param size length of the axis // a.shape[axis]
+     * 
+     * @returns [group_no, new_index];
+     */
+    private static find_group(i:number, ratio:number[], size:number) {
+        let r = 0;
+        let group = 0;
+
+        for (let ri = 0; ri < ratio.length; ri++) {
+            r += ratio[ri];
+            
+            if(i < (r*size)) {  
+                r -= ratio[ri];
+                break;
+            }
+
+            group++;
+        }
+
+        return [group, Math.floor(i - r*size)];
+    }
+
+    /**
+    * shifts the values in the given axis
+    * 
+    * after shifted:
+    * [[1, 2]
+    *  [3, 4]]
+    * 
+    * after shifted:
+    * [[0, 0],
+    *  [1, 2]]
+    */
+    static shift_values <arr> (a:nArray<arr>, res:nArray<arr>, axis=0, start=true) {
+        let tot = a.shape.reduce((a, b) => a*b);
+        let tot_el = a.shape.slice(axis).reduce((a, b) => a*b);
+
+        if(a.is_sparse) {
+            if(start) {
+                for (let i = 0; i < a.index.length; i++) {
+                    if((a.index[i] + tot_el) < tot) {
+                        res.index[i] = a.index[i] + tot_el;                
+                        res.data[i] = a.data[i];                
+                    } else {
+                        res.index.length = i;   
+                        res.data.length = i; 
+                        break;  
+                    }
+                }
+            } else {
+                let f = 0;
+                for (let i = 0; i < a.index.length; i++) {                                        
+                    if((a.index[i] - tot_el) >= 0) {
+                        res.index[f] = a.index[i] - tot_el;                
+                        res.data[f] = a.data[i];                                    
+                        f++;
+                    }
+                }
+                res.data.length = f;
+                res.index.length = f;
+            }
+        
+            res.is_sparse = a.is_sparse;
+            return res;
+        } else {
+            if (start) {
+                for (let d = 0; d < a.data.length; d++) {
+                    if((d + tot_el) < tot) {
+                        res.data[d + tot_el] = a.data[d]; 
+                    }
+
+                    if(d < tot_el) {
+                        res.data[d] = 0;
+                    }
+                }
+                    
+            } else {
+                for (let d = 0; d < a.data.length; d++) {
+                    if((d - tot_el) >= 0) {
+                        res.data[d - tot_el] = a.data[d]; 
+                    }
+
+                    if(d >= (tot - tot_el)) {
+                        res.data[d] = 0;
+                    }
+                }
+            }
+
+            res.is_sparse = a.is_sparse;
+            return res;
+        }
     }
 
 
-
     static transpose<arr> (a:nArray<arr>, res:nArray<arr>, dimension:number[]) {
+        if(dimension.length != a.shape.length) {
+            throw new Error(`transpose - ${dimension} - dimension is wrong`);
+        }
 
         let step = util.cal_step(a.shape);
         let tshape = util.cal_step_change(a.shape, dimension);
